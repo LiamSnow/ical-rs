@@ -1,8 +1,10 @@
-use crate::ical::objects::generics::ICalParameterMap;
+use std::fmt::Display;
 
-use super::{base::*, datetime::ICalDateTime, duration::ICalDuration};
+use crate::property::*;
+use super::{datetime::ICalDateTime, duration::ICalDuration};
 use anyhow::{anyhow, Context};
 
+#[derive(Clone)]
 pub struct ICalPeriod {
     pub start: ICalDateTime,
     pub end_or_duration: EndOrDuration,
@@ -10,12 +12,13 @@ pub struct ICalPeriod {
     pub end: ICalDateTime,
 }
 
+#[derive(Clone)]
 pub enum EndOrDuration {
     End(ICalDateTime),
     Duration(ICalDuration)
 }
 
-impl ICalPropType for ICalPeriod {
+impl ICalPropValueTrait for ICalPeriod {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let parts: Vec<&str> = value.splitn(2, '/').collect();
         if parts.len() != 2 {
@@ -71,8 +74,8 @@ mod tests {
     use chrono::DateTime;
     use chrono_tz::Tz;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::period::*;
+    use crate::property::*;
+    use crate::values::period::*;
 
     #[test]
     fn test_period_end() {
@@ -98,7 +101,17 @@ mod tests {
         let per = ICalPeriod::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(per.start, start);
         assert_eq!(per.end, end);
-        let s = ICalPropType::serialize(&per);
+        let s = ICalPropValueTrait::serialize(&per);
         assert_eq!(s, value);
+    }
+}
+
+impl Display for ICalPeriod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let t = match self.end_or_duration {
+            EndOrDuration::End(_) => "end",
+            EndOrDuration::Duration(_) => "duration",
+        };
+        write!(f, "(start:{},end:{},type:{})(Period)", self.start, self.end, t)
     }
 }

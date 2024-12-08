@@ -1,8 +1,7 @@
-pub mod base;
 pub mod date;
 pub mod datetime;
 pub mod integer;
-pub mod string;
+pub mod text;
 pub mod duration;
 pub mod binary;
 pub mod boolean;

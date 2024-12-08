@@ -1,12 +1,10 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 use anyhow::anyhow;
 
 use chrono::{DateTime, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
 
-use crate::ical::objects::generics::ICalParameterMap;
-
-use super::base::*;
+use crate::property::*;
 
 /// RFC 5545 3.3.5
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,7 +17,7 @@ pub enum ICalDateTime {
 
 const FORMAT: &str = "%Y%m%dT%H%M%S";
 
-impl ICalPropType for ICalDateTime {
+impl ICalPropValueTrait for ICalDateTime {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let is_utc = value.ends_with('Z');
         let value = if is_utc { value.trim_end_matches('Z') } else { value };
@@ -59,8 +57,8 @@ mod tests {
     use chrono::NaiveDate;
     use chrono::NaiveTime;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::datetime::*;
+    use crate::property::*;
+    use crate::values::datetime::*;
 
     #[test]
     fn test_datetime_local() {
@@ -91,7 +89,16 @@ mod tests {
     fn assert_datetime(value: &str, params: &HashMap<String, String>, expected: ICalDateTime) {
         let result = ICalDateTime::parse(value, &params).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropType::serialize(&result);
+        let s = ICalPropValueTrait::serialize(&result);
         assert_eq!(s, value);
+    }
+}
+
+impl Display for ICalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ICalDateTime::Local(dt) => write!(f, "{}(Local DateTime)", dt),
+            ICalDateTime::Zoned(dt) => write!(f, "{}(Zoned DateTime)", dt),
+        }
     }
 }

@@ -1,13 +1,12 @@
-use crate::ical::objects::generics::ICalParameterMap;
 use anyhow::anyhow;
 use base64::Engine;
 
-use super::base::*;
+use crate::property::*;
 
 ///RFC5545 3.1.1
 pub type ICalBinary = Vec<u8>;
 
-impl ICalPropType for ICalBinary {
+impl ICalPropValueTrait for ICalBinary {
     /// A "BASE64" encoded character string, as defined by [RFC4648]
     /// binary = *(4b-char) [b-end]
     /// b-end      = (2b-char "==") / (3b-char "=")
@@ -32,8 +31,8 @@ impl ICalPropType for ICalBinary {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::binary::*;
+    use crate::property::*;
+    use crate::values::binary::*;
 
     #[test]
     fn test_binary() {
@@ -42,7 +41,7 @@ mod tests {
         params.insert("ENCODING".to_string(), "BASE64".to_string());
         let bin = ICalBinary::parse(value, &params).expect("Failed to parse!");
         // assert_eq!(bin...?);
-        let s = ICalPropType::serialize(&bin);
+        let s = ICalPropValueTrait::serialize(&bin);
         assert_eq!(s, value);
     }
 }

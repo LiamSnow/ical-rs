@@ -1,12 +1,11 @@
-use crate::ical::objects::generics::ICalParameterMap;
-
-use super::base::*;
+use crate::property::*;
+use anyhow::Context;
 
 pub type ICalInteger = i32;
 
-impl ICalPropType for ICalInteger {
+impl ICalPropValueTrait for ICalInteger {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
-        Ok(value.parse()?)
+        Ok(value.parse().context("Parsing ICalInteger")?)
     }
 
     fn serialize(&self) -> String {

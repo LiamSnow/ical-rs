@@ -1,95 +1,68 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-use std::collections::HashMap;
-use std::vec::IntoIter;
+use std::{collections::HashMap, iter::Peekable, str::{Chars, Lines}};
 use anyhow::anyhow;
 
-use super::objects::generics::*;
-use super::objects::valarm::VAlarm;
-use super::objects::vevent::VEvent;
-use super::objects::vjournal::VJournal;
-use super::objects::vtodo::VTodo;
-use super::values::base::ICalProp;
+use crate::{component::ICalComponent, property::ICalProp};
 
-pub trait Parsable
-where
-    Self: Sized,
-{
-    fn parse(lines: &mut IntoIter<ContentLine>, begin_line: ContentLine) -> anyhow::Result<Self>;
-}
+pub fn parse(ical_str: &str) -> anyhow::Result<ICalComponent> {
+    let mut lines = ical_str.lines().peekable();
 
-lazy_static! {
-    /// Finds the location of all ICal folds
-    ///   RFC5545 3.1: a long line can be split between any two characters by
-    ///   inserting a CRLF immediately followed by a single linear white-space
-    ///   character (i.e., SPACE or HTAB)
-    static ref FOLDS: Regex = Regex::new(r"\r?\n[\t ]").unwrap();
-}
-
-impl VCalendar {
-    pub fn parse(ical_str: &str) -> anyhow::Result<Self> {
-        let unfolded_ical_str = FOLDS.replace_all(ical_str, "");
-        let mut lines = unfolded_ical_str
-            .lines()
-            .map(ContentLine::from_str)
-            .collect::<anyhow::Result<Vec<ContentLine>>>()?
-            .into_iter();
-
-        let begin_line = lines.next().ok_or(anyhow!("Error: ICal string is empty!"))?;
-        if begin_line.name != "BEGIN" || begin_line.value != VCalendar::NAME {
-            return Err(anyhow!("Error: ICal started with {}:{} not BEGIN:VCALENDAR!", begin_line.name, begin_line.value).into());
-        }
-
-        let mut children: Vec<ICalObject> = vec![];
-        while let Some(line) = lines.next() {
-            match (line.name.as_str(), line.value.as_str()) {
-                ("END", VCalendar::NAME) => break,
-                ("END", _) => return Err(anyhow!("Unexpected END in VCALENDAR. Found {}.", line.value)),
-                (_, _) => children.push(ICalObject::parse(&mut lines, line)?),
-            }
-        }
-        Ok(Self { children })
+    let begin_line = lines.next().ok_or(anyhow!("ICal string is empty!"))?.to_uppercase();
+    if begin_line != "BEGIN:VCALENDAR" {
+        return Err(anyhow!("ICal started with {begin_line} not BEGIN:VCALENDAR!").into());
     }
+
+    Ok(ICalComponent::parse("VCALENDAR".into(), &mut lines)?)
 }
 
-impl Parsable for ICalObject {
-    fn parse(lines: &mut IntoIter<ContentLine>, begin_line: ContentLine) -> anyhow::Result<Self> {
-        // println!("parsing {} {}", begin_line.value, begin_line.name);
-        if begin_line.name != "BEGIN" {
-            return Ok(begin_line.to_unknown_prop_obj());
-        }
+impl ICalComponent {
+    fn parse(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
+        let mut properties: HashMap<String, ICalProp> = HashMap::new();
+        let mut components: HashMap<String, ICalComponent> = HashMap::new();
 
-        Ok(match begin_line.value.as_str() {
-            VTodo::NAME => ICalObject::VTodo(VTodo::parse(lines, begin_line)?),
-            VEvent::NAME => ICalObject::VEvent(VEvent::parse(lines, begin_line)?),
-            VAlarm::NAME => ICalObject::VAlarm(VAlarm::parse(lines, begin_line)?),
-            VJournal::NAME => ICalObject::VJournal(VJournal::parse(lines, begin_line)?),
-            _ => ICalObject::UnknownComponent(UnknownComponent::parse(lines, begin_line)?)
-        })
-    }
-}
-
-impl Parsable for UnknownComponent {
-    fn parse(lines: &mut IntoIter<ContentLine>, begin_line: ContentLine) -> anyhow::Result<Self> {
-        let mut children: Vec<ICalObject> = vec![];
-        let name = begin_line.value.as_str();
         while let Some(line) = lines.next() {
-            match (line.name.as_str(), line.value.as_str()) {
-                ("END", end_name) => {
-                    if end_name == name {
-                        break
-                    }
-                    return Err(anyhow!("Unexpected END in {}. Found {}.", begin_line.value, line.value))
+            let line = unfold_line(line, lines);
+            let cl = ContentLine::parse(&line)?;
+            let name = cl.name.clone();
+
+            match name.as_str() {
+                "BEGIN" => {
+                    let comp = ICalComponent::parse(&cl.value, lines)?;
+                    components.insert(cl.value, comp);
                 },
-                (_, _) => children.push(ICalObject::parse(lines, line)?),
+                "END" => {
+                    if cl.value != component_name {
+                        return Err(anyhow!("Unexpected END in component!"));
+                    }
+                    break
+                },
+                _ => {
+                    let prop = ICalProp::parse(cl)?;
+                    properties.insert(name, prop);
+                }
             }
         }
-        Ok(Self {
-            name: name.to_string(),
-            children,
-            params: begin_line.params
+
+        Ok(ICalComponent {
+            properties, components
         })
     }
+}
+
+fn unfold_line(line: &str, lines: &mut Peekable<Lines>) -> String {
+    let mut line = line.to_string();
+    while next_line_folded(lines) {
+        let mut next_line = lines.next().unwrap().to_string();
+        next_line.remove(0);
+        line.push_str(&next_line);
+    }
+    line
+}
+
+fn next_line_folded(lines: &mut Peekable<Lines>) -> bool {
+    if let Some(next_line) = lines.peek() {
+        return next_line.starts_with(' ') || next_line.starts_with('\t')
+    }
+    false
 }
 
 #[derive(Debug, Clone)]
@@ -101,45 +74,78 @@ pub struct ContentLine {
 
 impl ContentLine {
     ///RFC5545 3.1: "name *(";" param ) ":" value CRLF"
-    fn from_str(line: &str) -> anyhow::Result<Self> {
-        //TODO TODO TODO FIXME params can have quotes with any text!!!!!!!!!!!
-        let parts: Vec<&str> = line.splitn(2, ':').collect();
-        if parts.len() < 2 {
-            return Err(anyhow!("Error: no colon found on content line! Line: {}", line));
-        }
-
-        let value = parts[1];
-        let mut left_hand_parts: Vec<&str> = parts[0].split(';').collect();
-
-        let name = left_hand_parts.remove(0);
-        if name.is_empty() {
-            return Err(anyhow!("Error: no name found on content line! Line: {}", line));
-        }
-
+    pub fn parse(line: &str) -> anyhow::Result<Self> {
+        let mut chars = line.chars().peekable();
         let mut params: HashMap<String, String> = HashMap::new();
-        for param in left_hand_parts {
-            let (name, value) = ContentLine::parse_parameter(param)?;
-            params.insert(name, value);
+
+        let (name, delim) = Self::read_until_delim(&mut chars, vec![';', ':'])?;
+
+        if delim == ';' {
+            Self::parse_params(&mut chars, &mut params)?;
         }
 
-        Ok(ContentLine { name: name.to_string(), params, value: value.to_string() })
-    }
-
-    fn parse_parameter(param: &str) -> anyhow::Result<(String, String)> {
-        let parts: Vec<&str> = param.splitn(2, '=').collect();
-        if parts.len() < 2 {
-            return Err(anyhow!("Error: no equals found in parameter! Parameter: {}", param));
+        let mut value = String::new();
+        while let Some(c) = chars.next() {
+            value.push(c);
         }
-        Ok((parts[0].to_string(), parts[1].to_string()))
+
+        Ok(ContentLine { name, params, value })
     }
 
-    pub fn to_unknown_prop_obj(self) -> ICalObject {
-        ICalObject::UnknownProperty(UnknownProperty {
-            name: self.name,
-            value: ICalProp {
-                value: self.value,
-                params: self.params
+    /// RFC 5545 3.2
+    /// Recursively read paramters
+    /// Example: DIR="text";
+    /// Example: DIR=asdfasdf;
+    fn parse_params(chars: &mut Peekable<Chars>, params: &mut HashMap<String, String>) -> anyhow::Result<()> {
+        let (name, _) = Self::read_until_delim(chars, vec!['='])?;
+
+        let val_start = chars.peek().expect("ContentLine Parameter had unexpected end after =".into());
+
+        let value: String;
+        let delim: char;
+
+        if *val_start == '"' {
+            value = Self::read_string(chars)?;
+            delim = chars.next().expect("ContentLine Parameter had unexpected end after quoted value!");
+        }
+        else {
+            (value, delim) = Self::read_until_delim(chars, vec![';', ':'])?;
+        }
+
+        params.insert(name, value);
+
+        match delim {
+            ';' => Self::parse_params(chars, params),
+            ':' => Ok(()),
+            _ => Err(anyhow!("ContentLine Parameter had unexpected char after value"))
+        }
+    }
+
+    fn read_until_delim(chars: &mut Peekable<Chars>, delims: Vec<char>) -> anyhow::Result<(String, char)> {
+        let mut name = String::new();
+        while let Some(c) = chars.next() {
+            if delims.contains(&c) {
+                return Ok((name, c))
             }
-        })
+            name.push(c.to_ascii_uppercase())
+        }
+        Err(anyhow!("ContentLine missing delimeter!"))
+    }
+
+    /// RFC: "Property parameter values MUST NOT contain the DQUOTE character."
+    /// Reads from the first quote to the next quote
+    fn read_string(chars: &mut Peekable<Chars>) -> anyhow::Result<String> {
+        let mut s = String::new();
+        chars.next().expect("ContentLine Parameter quote value is empty!");
+        while let Some(c) = chars.next() {
+            if c == '"' {
+                return Ok(s)
+            }
+            s.push(c)
+        }
+        Err(anyhow!("ContentLine Parameter quote value unexpectedly ended!"))
     }
 }
+
+
+

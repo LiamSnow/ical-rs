@@ -1,15 +1,13 @@
 use chrono::NaiveDate;
 
-use crate::ical::objects::generics::ICalParameterMap;
-
-use super::base::*;
+use crate::property::*;
 
 /// RFC 5545 3.3.4: 19970714 -> July 14, 1997
 pub type ICalDate = NaiveDate;
 
 const FORMAT: &str = "%Y%m%d";
 
-impl ICalPropType for ICalDate {
+impl ICalPropValueTrait for ICalDate {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(NaiveDate::parse_from_str(value, FORMAT)?)
     }
@@ -23,8 +21,8 @@ impl ICalPropType for ICalDate {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::date::*;
+    use crate::property::*;
+    use crate::values::date::*;
 
     #[test]
     fn test_date() {
@@ -32,7 +30,7 @@ mod tests {
         let expected = NaiveDate::from_ymd_opt(2014, 5, 17).unwrap();
         let date = ICalDate::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(date, expected);
-        let s = ICalPropType::serialize(&date);
+        let s = ICalPropValueTrait::serialize(&date);
         assert_eq!(s, value);
     }
 }

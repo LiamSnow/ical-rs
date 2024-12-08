@@ -1,12 +1,11 @@
-use crate::ical::objects::generics::ICalParameterMap;
+use crate::property::*;
+use anyhow::Context;
 
-use super::base::*;
+pub type ICalFloat = f64;
 
-pub type ICalFloat = f32;
-
-impl ICalPropType for ICalFloat {
+impl ICalPropValueTrait for ICalFloat {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
-        Ok(value.parse()?)
+        Ok(value.parse().context("Parsing ICalFloat")?)
     }
 
     fn serialize(&self) -> String {

@@ -1,14 +1,13 @@
-use crate::ical::objects::generics::ICalParameterMap;
+use crate::property::*;
 
-use super::base::*;
-
+#[derive(Clone)]
 pub struct ICalAddress {
     pub email: String
 }
 
 const MAILTO_PREFIX: &'static str = "mailto:";
 
-impl ICalPropType for ICalAddress {
+impl ICalPropValueTrait for ICalAddress {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         if !value.starts_with(MAILTO_PREFIX) {
             return Err(anyhow::anyhow!("ICalAddress must start with 'mailto:'"));
@@ -43,15 +42,15 @@ fn is_valid_email(email: &str) -> bool {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::address::*;
+    use crate::property::*;
+    use crate::values::address::*;
 
     #[test]
     fn test_address() {
         let value = "mailto:jane_doe@example.com";
         let addr = ICalAddress::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(addr.email, "jane_doe@example.com");
-        let s = ICalPropType::serialize(&addr);
+        let s = ICalPropValueTrait::serialize(&addr);
         assert_eq!(s, value);
     }
 }

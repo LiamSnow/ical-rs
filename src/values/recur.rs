@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
-use crate::ical::objects::generics::ICalParameterMap;
-use super::{base::*, date::ICalDate, datetime::ICalDateTime};
+use crate::property::*;
+use super::{date::ICalDate, datetime::ICalDateTime};
 use anyhow::{anyhow, Context};
 
 ///RFC 5545 3.3.10 Recurrence Rule = rule ** ;
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct ICalRecur {
     pub freq: Frequency,
     pub until: Option<DateOrDateTime>,
@@ -32,7 +32,7 @@ pub struct ICalRecur {
     pub wkst: Option<Weekday>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Frequency {
     Secondly,
     Minutely,
@@ -43,7 +43,7 @@ pub enum Frequency {
     Yearly
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Weekday {
     Sunday,
     Monday,
@@ -57,19 +57,19 @@ pub enum Weekday {
 /// Each BDAY can be preceded by a integer, which indicates nth occurance of a specific day within
 /// the MONTHLY or YEARLY "RRULE" For example, within a MONTHLY rule, +1MO (or 1MO) represents the
 /// first Monday in the month and -1MO represents the last
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ByDay {
     pub ordwk: Option<i8>,
     pub weekday: Weekday
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DateOrDateTime {
     Date(ICalDate),
     DateTime(ICalDateTime)
 }
 
-impl ICalPropType for ICalRecur {
+impl ICalPropValueTrait for ICalRecur {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let mut rules = value.split(';');
 
@@ -309,8 +309,8 @@ impl ByDay {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::recur::*;
+    use crate::property::*;
+    use crate::values::recur::*;
 
     #[test]
     fn test_recur() {
@@ -329,7 +329,7 @@ mod tests {
         };
         let result = ICalRecur::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropType::serialize(&result);
+        let s = ICalPropValueTrait::serialize(&result);
         assert_eq!(s, value);
     }
 }

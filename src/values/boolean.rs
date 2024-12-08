@@ -1,10 +1,8 @@
-use crate::ical::objects::generics::ICalParameterMap;
-
-use super::base::*;
+use crate::property::*;
 
 pub type ICalBoolean = bool;
 
-impl ICalPropType for ICalBoolean {
+impl ICalPropValueTrait for ICalBoolean {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.to_lowercase().parse()?)
     }
@@ -18,8 +16,8 @@ impl ICalPropType for ICalBoolean {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::ical::values::base::*;
-    use crate::ical::values::boolean::*;
+    use crate::property::*;
+    use crate::values::boolean::*;
 
     #[test]
     fn test_boolean_false() {
@@ -34,7 +32,7 @@ mod tests {
     fn assert_boolean(value: &str, expected: bool) {
         let result = ICalBoolean::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropType::serialize(&result);
+        let s = ICalPropValueTrait::serialize(&result);
         assert_eq!(s, value);
     }
 }
