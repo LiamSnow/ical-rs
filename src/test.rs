@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::parser;
+    use crate::{parser, serializer};
 
     #[test]
     fn test_full() {
@@ -16,14 +16,32 @@ LAST-MODIFIED:20241016T020342Z
 PERCENT-COMPLETE:100
 STATUS:COMPLETED
 DESCRIPTION:example description
-summary:Example
+SUMMARY:Example
 UID:F87D9736-8ADE-47E4-AC46-638B5C86E7D0
 X-TEST-PROP;VALUE=INTEGER:10
 X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#.replace("\n", "\r\n");
 
-        let vcal = parser::parse(&in_ics).unwrap();
+        let vcal = parser::from_ics(&in_ics).unwrap();
+        let out_ics = serializer::to_ics(vcal);
+
+        let in_lines: Vec<&str> = in_ics.split("\r\n").collect();
+        let out_lines: Vec<&str> = out_ics.split("\r\n").collect();
+
+        let in_lines_len = in_lines.len();
+        let out_lines_len = out_lines.len();
+
+        if in_lines_len != out_lines_len {
+            panic!("Lines lost! Expected {} got {}", in_lines_len, out_lines_len);
+        }
+
+        for in_line in in_lines {
+            assert!(
+                out_lines.contains(&in_line),
+                "Output does not contain {}", in_line
+            );
+        }
     }
 
     #[test]
@@ -53,7 +71,7 @@ X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#.replace("\n", "\r\n");
 
-        let vcal = parser::parse(&in_ics).unwrap();
+        let vcal = parser::from_ics(&in_ics).unwrap();
         let vtodo = vcal.get_vtodo().unwrap();
         let org = vtodo.properties.get("ORGANIZER").unwrap();
         assert_eq!(org.expect_text().unwrap(), "mailto:jimdo@example.com");

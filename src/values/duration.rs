@@ -16,7 +16,7 @@ use crate::property::*;
 ///  "-P1D" = Negative 1 day
 pub type ICalDuration = TimeDelta;
 
-impl ICalPropValueTrait for ICalDuration {
+impl ICalPropertyValueTrait for ICalDuration {
     /// The RFC is strict on either being date (day + time), time, or week
     /// but this system is more relaxed
     /// This also does not require time to include a T
@@ -155,7 +155,7 @@ mod tests {
         assert_eq!(minutes, expected_minutes, "Minutes wrong");
         assert_eq!(seconds, expected_seconds, "Seconds wrong");
 
-        let s = ICalPropValueTrait::serialize(&dur);
+        let s = ICalPropertyValueTrait::serialize(&dur);
         assert_eq!(s, value, "Serialization wrong");
     }
 }

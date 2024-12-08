@@ -69,7 +69,7 @@ pub enum DateOrDateTime {
     DateTime(ICalDateTime)
 }
 
-impl ICalPropValueTrait for ICalRecur {
+impl ICalPropertyValueTrait for ICalRecur {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let mut rules = value.split(';');
 
@@ -329,7 +329,7 @@ mod tests {
         };
         let result = ICalRecur::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropValueTrait::serialize(&result);
+        let s = ICalPropertyValueTrait::serialize(&result);
         assert_eq!(s, value);
     }
 }

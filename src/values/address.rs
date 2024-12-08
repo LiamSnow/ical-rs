@@ -7,7 +7,7 @@ pub struct ICalAddress {
 
 const MAILTO_PREFIX: &'static str = "mailto:";
 
-impl ICalPropValueTrait for ICalAddress {
+impl ICalPropertyValueTrait for ICalAddress {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         if !value.starts_with(MAILTO_PREFIX) {
             return Err(anyhow::anyhow!("ICalAddress must start with 'mailto:'"));
@@ -50,7 +50,7 @@ mod tests {
         let value = "mailto:jane_doe@example.com";
         let addr = ICalAddress::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(addr.email, "jane_doe@example.com");
-        let s = ICalPropValueTrait::serialize(&addr);
+        let s = ICalPropertyValueTrait::serialize(&addr);
         assert_eq!(s, value);
     }
 }

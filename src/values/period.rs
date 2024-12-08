@@ -18,7 +18,7 @@ pub enum EndOrDuration {
     Duration(ICalDuration)
 }
 
-impl ICalPropValueTrait for ICalPeriod {
+impl ICalPropertyValueTrait for ICalPeriod {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let parts: Vec<&str> = value.splitn(2, '/').collect();
         if parts.len() != 2 {
@@ -101,7 +101,7 @@ mod tests {
         let per = ICalPeriod::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(per.start, start);
         assert_eq!(per.end, end);
-        let s = ICalPropValueTrait::serialize(&per);
+        let s = ICalPropertyValueTrait::serialize(&per);
         assert_eq!(s, value);
     }
 }

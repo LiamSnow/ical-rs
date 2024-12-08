@@ -17,7 +17,7 @@ pub enum ICalDateTime {
 
 const FORMAT: &str = "%Y%m%dT%H%M%S";
 
-impl ICalPropValueTrait for ICalDateTime {
+impl ICalPropertyValueTrait for ICalDateTime {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let is_utc = value.ends_with('Z');
         let value = if is_utc { value.trim_end_matches('Z') } else { value };
@@ -89,7 +89,7 @@ mod tests {
     fn assert_datetime(value: &str, params: &HashMap<String, String>, expected: ICalDateTime) {
         let result = ICalDateTime::parse(value, &params).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropValueTrait::serialize(&result);
+        let s = ICalPropertyValueTrait::serialize(&result);
         assert_eq!(s, value);
     }
 }

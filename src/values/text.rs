@@ -2,7 +2,7 @@ use crate::property::*;
 
 pub type ICalText = String;
 
-impl ICalPropValueTrait for ICalText {
+impl ICalPropertyValueTrait for ICalText {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.to_string())
     }
@@ -14,7 +14,7 @@ impl ICalPropValueTrait for ICalText {
 
 pub type ICalTextList = Vec<String>;
 
-impl ICalPropValueTrait for ICalTextList {
+impl ICalPropertyValueTrait for ICalTextList {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.split(',').map(|s| s.to_owned()).collect())
     }

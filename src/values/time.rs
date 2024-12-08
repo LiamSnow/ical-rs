@@ -14,7 +14,7 @@ pub struct ICalTime {
 
 const FORMAT: &str = "%H%M%S";
 
-impl ICalPropValueTrait for ICalTime {
+impl ICalPropertyValueTrait for ICalTime {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let is_utc = value.ends_with('Z');
         let value = if is_utc { value.trim_end_matches('Z') } else { value };
@@ -68,7 +68,7 @@ mod tests {
         let icaltime = ICalTime::parse(value, &params).expect("Failed to parse!");
         assert_eq!(icaltime.time, expected_time);
         assert_eq!(icaltime.timezone, expected_timezone);
-        let s = ICalPropValueTrait::serialize(&icaltime);
+        let s = ICalPropertyValueTrait::serialize(&icaltime);
         assert_eq!(s, value);
     }
 }

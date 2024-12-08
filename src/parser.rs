@@ -1,22 +1,20 @@
 use std::{collections::HashMap, iter::Peekable, str::{Chars, Lines}};
 use anyhow::anyhow;
 
-use crate::{component::ICalComponent, property::ICalProp};
+use crate::{component::ICalComponent, property::ICalProperty};
 
-pub fn parse(ical_str: &str) -> anyhow::Result<ICalComponent> {
-    let mut lines = ical_str.lines().peekable();
-
+pub fn from_ics(ics: &str) -> anyhow::Result<ICalComponent> {
+    let mut lines = ics.lines().peekable();
     let begin_line = lines.next().ok_or(anyhow!("ICal string is empty!"))?.to_uppercase();
     if begin_line != "BEGIN:VCALENDAR" {
         return Err(anyhow!("ICal started with {begin_line} not BEGIN:VCALENDAR!").into());
     }
-
-    Ok(ICalComponent::parse("VCALENDAR".into(), &mut lines)?)
+    Ok(ICalComponent::from_ics("VCALENDAR".into(), &mut lines)?)
 }
 
 impl ICalComponent {
-    fn parse(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
-        let mut properties: HashMap<String, ICalProp> = HashMap::new();
+    fn from_ics(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
+        let mut properties: HashMap<String, ICalProperty> = HashMap::new();
         let mut components: HashMap<String, ICalComponent> = HashMap::new();
 
         while let Some(line) = lines.next() {
@@ -26,7 +24,7 @@ impl ICalComponent {
 
             match name.as_str() {
                 "BEGIN" => {
-                    let comp = ICalComponent::parse(&cl.value, lines)?;
+                    let comp = ICalComponent::from_ics(&cl.value, lines)?;
                     components.insert(cl.value, comp);
                 },
                 "END" => {
@@ -36,7 +34,7 @@ impl ICalComponent {
                     break
                 },
                 _ => {
-                    let prop = ICalProp::parse(cl)?;
+                    let prop = ICalProperty::from_content_line(cl)?;
                     properties.insert(name, prop);
                 }
             }

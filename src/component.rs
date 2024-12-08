@@ -1,10 +1,10 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crate::property::ICalProp;
+use crate::property::ICalProperty;
 
 pub struct ICalComponent {
     //TODO multi-map
-    pub properties: HashMap<String, ICalProp>,
+    pub properties: HashMap<String, ICalProperty>,
     pub components: HashMap<String, ICalComponent>
 }
 

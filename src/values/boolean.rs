@@ -2,7 +2,7 @@ use crate::property::*;
 
 pub type ICalBoolean = bool;
 
-impl ICalPropValueTrait for ICalBoolean {
+impl ICalPropertyValueTrait for ICalBoolean {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.to_lowercase().parse()?)
     }
@@ -32,7 +32,7 @@ mod tests {
     fn assert_boolean(value: &str, expected: bool) {
         let result = ICalBoolean::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropValueTrait::serialize(&result);
+        let s = ICalPropertyValueTrait::serialize(&result);
         assert_eq!(s, value);
     }
 }
