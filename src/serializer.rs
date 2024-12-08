@@ -1,8 +1,7 @@
 use crate::{component::ICalComponent, property::ICalProperty};
 use unicode_segmentation::UnicodeSegmentation;
 
-const CRLF: &str = "\r\n";
-
+pub const CRLF: &str = "\r\n";
 
 impl ICalComponent {
     pub fn to_ics(&self) -> String {
@@ -17,11 +16,15 @@ impl ICalComponent {
         }
         ics.push_str("BEGIN:");
         ics.push_str(comp_name);
-        for (prop_name, prop) in &self.props {
-            prop.to_ics(ics, prop_name);
+        for (prop_name, props) in &self.props {
+            for prop in props {
+                prop.to_ics(ics, prop_name);
+            }
         }
-        for (comp_name, comp) in &self.comps {
-            comp._to_ics(ics, comp_name, false);
+        for (comp_name, comps) in &self.comps {
+            for comp in comps {
+                comp._to_ics(ics, comp_name, false);
+            }
         }
         ics.push_str(CRLF);
         ics.push_str("END:");
@@ -82,7 +85,7 @@ impl ICalProperty {
             }
         }
         line.push(':');
-        line.push_str(&self.serialize_value());
+        line.push_str(&self.value.serialize());
         line
     }
 }

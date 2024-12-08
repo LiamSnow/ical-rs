@@ -12,3 +12,10 @@ impl ICalPropertyValueTrait for ICalInteger {
         self.to_string()
     }
 }
+
+impl From<ICalInteger> for ICalProperty {
+    fn from(value: ICalInteger) -> Self {
+        Self::from_value(ICalPropertyValue::Integer(value))
+    }
+}
+

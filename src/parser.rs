@@ -1,7 +1,7 @@
 use std::{collections::HashMap, iter::Peekable, str::Lines};
 use anyhow::anyhow;
 
-use crate::{component::ICalComponent, property::ICalProperty};
+use crate::{component::{ICalComponent, ICalComponentMap, ICalPropertyMap}, property::ICalProperty};
 
 pub fn from_ics(ics: &str) -> anyhow::Result<ICalComponent> {
     let mut lines = ics.lines().peekable();
@@ -14,8 +14,8 @@ pub fn from_ics(ics: &str) -> anyhow::Result<ICalComponent> {
 
 impl ICalComponent {
     fn from_ics(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
-        let mut properties: HashMap<String, ICalProperty> = HashMap::new();
-        let mut components: HashMap<String, ICalComponent> = HashMap::new();
+        let mut props = ICalPropertyMap::new();
+        let mut comps = ICalComponentMap::new();
 
         while let Some(line) = lines.next() {
             let line = unfold_line(line, lines);
@@ -25,7 +25,7 @@ impl ICalComponent {
             match name.as_str() {
                 "BEGIN" => {
                     let comp = ICalComponent::from_ics(&cl.value, lines)?;
-                    components.insert(cl.value, comp);
+                    comps.insert(cl.value, comp);
                 },
                 "END" => {
                     if cl.value != component_name {
@@ -35,13 +35,13 @@ impl ICalComponent {
                 },
                 _ => {
                     let prop = ICalProperty::from_content_line(cl)?;
-                    properties.insert(name, prop);
+                    props.insert(name, prop);
                 }
             }
         }
 
         Ok(ICalComponent {
-            props: properties, comps: components
+            props, comps
         })
     }
 }

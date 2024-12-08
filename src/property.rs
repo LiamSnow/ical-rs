@@ -44,6 +44,11 @@ impl ICalProperty {
         Self::new(value, HashMap::new())
     }
 
+    pub fn set_param(&mut self, name: String, value: String) -> &mut Self {
+        self.params.insert(name, value);
+        self
+    }
+
     pub(crate) fn from_content_line(cl: ContentLine) -> anyhow::Result<Self> {
         let value: ICalPropertyValue;
 
@@ -83,24 +88,6 @@ impl ICalProperty {
         Ok(Self::new(value, cl.params))
     }
 
-    pub(crate) fn serialize_value(&self) -> String {
-        match &self.value {
-            ICalPropertyValue::Binary(b) => b.serialize(),
-            ICalPropertyValue::Boolean(b) => b.serialize(),
-            ICalPropertyValue::CalAddress(b) => b.serialize(),
-            ICalPropertyValue::Date(b) => b.serialize(),
-            ICalPropertyValue::DateTime(b) => b.serialize(),
-            ICalPropertyValue::Time(b) => b.serialize(),
-            ICalPropertyValue::Duration(b) => b.serialize(),
-            ICalPropertyValue::Float(b) => b.serialize(),
-            ICalPropertyValue::Integer(b) => b.serialize(),
-            ICalPropertyValue::Period(b) => b.serialize(),
-            ICalPropertyValue::Recur(b) => b.serialize(),
-            ICalPropertyValue::Text(b) => b.serialize(),
-            ICalPropertyValue::TextList(b) => b.serialize(),
-        }
-    }
-
     pub fn get_text(&self) -> Option<&str> {
         match &self.value {
             ICalPropertyValue::Text(t) => Some(t),
@@ -113,27 +100,23 @@ impl ICalProperty {
     }
 }
 
-impl From<ICalInteger> for ICalProperty {
-    fn from(value: ICalInteger) -> Self {
-        Self::from_value(ICalPropertyValue::Integer(value))
-    }
-}
-
-impl From<ICalText> for ICalProperty {
-    fn from(value: ICalText) -> Self {
-        Self::from_value(ICalPropertyValue::Text(value))
-    }
-}
-
-impl From<&str> for ICalProperty {
-    fn from(value: &str) -> Self {
-        Self::from_value(ICalPropertyValue::Text(value.to_string()))
-    }
-}
-
-impl From<ICalDateTime> for ICalProperty {
-    fn from(value: ICalDateTime) -> Self {
-        Self::from_value(ICalPropertyValue::DateTime(value))
+impl ICalPropertyValue {
+    pub fn serialize(&self) -> String {
+        match self {
+            Self::Binary(b) => b.serialize(),
+            Self::Boolean(b) => b.serialize(),
+            Self::CalAddress(b) => b.serialize(),
+            Self::Date(b) => b.serialize(),
+            Self::DateTime(b) => b.serialize(),
+            Self::Time(b) => b.serialize(),
+            Self::Duration(b) => b.serialize(),
+            Self::Float(b) => b.serialize(),
+            Self::Integer(b) => b.serialize(),
+            Self::Period(b) => b.serialize(),
+            Self::Recur(b) => b.serialize(),
+            Self::Text(b) => b.serialize(),
+            Self::TextList(b) => b.serialize(),
+        }
     }
 }
 

@@ -50,6 +50,24 @@ impl ICalPropertyValueTrait for ICalDateTime {
     }
 }
 
+impl From<ICalDateTime> for ICalProperty {
+    fn from(value: ICalDateTime) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value))
+    }
+}
+
+impl From<NaiveDateTime> for ICalProperty {
+    fn from(value: NaiveDateTime) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+    }
+}
+
+impl From<DateTime<Tz>> for ICalProperty {
+    fn from(value: DateTime<Tz>) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+    }
+}
+
 impl From<NaiveDateTime> for ICalDateTime {
     fn from(value: NaiveDateTime) -> Self {
         Self::Local(value)
