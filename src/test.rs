@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{constructors::todo, parser, serializer};
+    use crate::{constructors::todo, parser};
 
     #[test]
     fn test_builder() {
@@ -8,7 +8,7 @@ mod tests {
             .uid("128397129837129837".into())
             .dtstamp(10.into())
             .call();
-        println!("{}", serializer::to_ics(vcal));
+        println!("{}", vcal.to_ics());
     }
 
     #[test]
@@ -34,12 +34,12 @@ X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#.replace("\n", "\r\n");
 
-        let vcal = parser::from_ics(&in_ics).unwrap();
-        // println!("{}", vcal);
+        let mut vcal = parser::from_ics(&in_ics).unwrap();
 
-        let out_ics = serializer::to_ics(vcal);
-        // println!("\nIN: {}", in_ics);
-        // println!("\nOUT: {}", out_ics);
+        let out_ics = vcal.to_ics();
+
+        println!("\nIN: {}", in_ics);
+        println!("\nOUT: {}", out_ics);
 
         //compare ignoring line order
         let in_lines: Vec<&str> = in_ics.split("\r\n").collect();
@@ -84,10 +84,10 @@ X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#.replace("\n", "\r\n");
 
-        let vcal = parser::from_ics(&in_ics).unwrap();
+        let mut vcal = parser::from_ics(&in_ics).unwrap();
         let vtodo = vcal.get_vtodo().unwrap();
         let org = vtodo.props.get("ORGANIZER").unwrap();
-        assert_eq!(org.expect_text().unwrap(), "mailto:jimdo@example.com");
+        assert_eq!(org.expect_text(), "mailto:jimdo@example.com");
         assert_eq!(org.params.get("DIR").unwrap(), "ldap://example.com:6666/o=ABC%20Industries,c=US???(cn=Jim%20Dolittle)");
     }
 }

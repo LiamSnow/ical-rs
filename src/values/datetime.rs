@@ -50,6 +50,18 @@ impl ICalPropertyValueTrait for ICalDateTime {
     }
 }
 
+impl From<NaiveDateTime> for ICalDateTime {
+    fn from(value: NaiveDateTime) -> Self {
+        Self::Local(value)
+    }
+}
+
+impl From<DateTime<Tz>> for ICalDateTime {
+    fn from(value: DateTime<Tz>) -> Self {
+        Self::Zoned(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;

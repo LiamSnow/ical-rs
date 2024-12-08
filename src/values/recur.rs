@@ -4,6 +4,8 @@ use crate::property::*;
 use super::{date::ICalDate, datetime::ICalDateTime};
 use anyhow::{anyhow, Context};
 
+//TODO Helper functions to make and use Recur easily
+
 ///RFC 5545 3.3.10 Recurrence Rule = rule ** ;
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct ICalRecur {

@@ -9,8 +9,16 @@ pub struct ICalComponent {
 }
 
 impl ICalComponent {
-    pub fn get_vtodo(&self) -> Option<&ICalComponent> {
-        self.comps.get("VTODO")
+    pub fn get_vtodo(&mut self) -> Option<&mut ICalComponent> {
+        self.comps.get_mut("VTODO")
+    }
+
+    pub fn expect_vtodo(&mut self) -> &mut ICalComponent {
+        self.get_vtodo().unwrap()
+    }
+
+    pub fn expect_prop(&mut self, name: &str) -> &mut ICalProperty {
+        self.props.get_mut(name).unwrap()
     }
 }
 

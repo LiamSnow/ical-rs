@@ -3,14 +3,15 @@ use unicode_segmentation::UnicodeSegmentation;
 
 const CRLF: &str = "\r\n";
 
-pub fn to_ics(vcal: ICalComponent) -> String {
-    let mut ics = String::new();
-    vcal.to_ics(&mut ics, "VCALENDAR", true);
-    ics
-}
 
 impl ICalComponent {
-    fn to_ics(&self, ics: &mut String, comp_name: &str, init: bool) {
+    pub fn to_ics(&self) -> String {
+        let mut ics = String::new();
+        self._to_ics(&mut ics, "VCALENDAR", true);
+        ics
+    }
+
+    fn _to_ics(&self, ics: &mut String, comp_name: &str, init: bool) {
         if !init {
             ics.push_str(CRLF);
         }
@@ -20,7 +21,7 @@ impl ICalComponent {
             prop.to_ics(ics, prop_name);
         }
         for (comp_name, comp) in &self.comps {
-            comp.to_ics(ics, comp_name, false);
+            comp._to_ics(ics, comp_name, false);
         }
         ics.push_str(CRLF);
         ics.push_str("END:");

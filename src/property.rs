@@ -40,6 +40,10 @@ impl ICalProperty {
         ICalProperty { value, params }
     }
 
+    pub fn from_value(value: ICalPropertyValue) -> Self {
+        Self::new(value, HashMap::new())
+    }
+
     pub(crate) fn from_content_line(cl: ContentLine) -> anyhow::Result<Self> {
         let value: ICalPropertyValue;
 
@@ -97,38 +101,39 @@ impl ICalProperty {
         }
     }
 
-    pub fn expect_text(&self) -> Option<&str> {
+    pub fn get_text(&self) -> Option<&str> {
         match &self.value {
             ICalPropertyValue::Text(t) => Some(t),
             _ => None
         }
     }
-}
 
-impl From<i32> for ICalProperty {
-    fn from(value: i32) -> Self {
-        Self {
-            value: ICalPropertyValue::Integer(value),
-            params: HashMap::new()
-        }
+    pub fn expect_text(&self) -> &str {
+        self.get_text().unwrap()
     }
 }
 
-impl From<String> for ICalProperty {
-    fn from(value: String) -> Self {
-        Self {
-            value: ICalPropertyValue::Text(value),
-            params: HashMap::new()
-        }
+impl From<ICalInteger> for ICalProperty {
+    fn from(value: ICalInteger) -> Self {
+        Self::from_value(ICalPropertyValue::Integer(value))
+    }
+}
+
+impl From<ICalText> for ICalProperty {
+    fn from(value: ICalText) -> Self {
+        Self::from_value(ICalPropertyValue::Text(value))
     }
 }
 
 impl From<&str> for ICalProperty {
     fn from(value: &str) -> Self {
-        Self {
-            value: ICalPropertyValue::Text(value.to_string()),
-            params: HashMap::new()
-        }
+        Self::from_value(ICalPropertyValue::Text(value.to_string()))
+    }
+}
+
+impl From<ICalDateTime> for ICalProperty {
+    fn from(value: ICalDateTime) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value))
     }
 }
 
