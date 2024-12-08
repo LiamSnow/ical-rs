@@ -22,9 +22,8 @@ impl ICalPropertyValueTrait for ICalDuration {
     /// This also does not require time to include a T
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         // println!("parsing duration {}", value);
-        let mut chars = value.chars();
-        let inverted = find_sign(&mut chars)?;
-        let duration = parse_duration(&mut chars)?;
+        let (inverted, rest) = pop_sign(value);
+        let duration = parse_duration(rest)?;
         Ok(if inverted { -duration } else { duration })
     }
 
@@ -44,11 +43,11 @@ impl ICalPropertyValueTrait for ICalDuration {
 
         //dur-weeks
         if !has_time && days == 0 { //has exact number of weeks
-            push_comp(&mut str, weeks, "W");
+            push_comp(&mut str, weeks, 'W');
         }
         else {
             if total_days > 0 {
-                push_comp(&mut str, total_days, "D");
+                push_comp(&mut str, total_days, 'D');
             }
             if has_time {
                 serialize_time(&mut str, hours, minutes, seconds);
@@ -60,62 +59,54 @@ impl ICalPropertyValueTrait for ICalDuration {
 }
 
 fn serialize_time(str: &mut String, hours: i64, minutes: i64, seconds: i64) {
-    *str += "T";
+    str.push('T');
     if seconds > 0 {
-        push_comp(str, hours, "H");
-        push_comp(str, minutes, "M");
-        push_comp(str, seconds, "S");
+        push_comp(str, hours, 'H');
+        push_comp(str, minutes, 'M');
+        push_comp(str, seconds, 'S');
     }
     else if minutes > 0 {
-        push_comp(str, hours, "H");
-        push_comp(str, minutes, "M");
+        push_comp(str, hours, 'H');
+        push_comp(str, minutes, 'M');
     }
     else if hours > 0 {
-        push_comp(str, hours, "H");
+        push_comp(str, hours, 'H');
     }
 }
 
-fn push_comp(str: &mut String, num: i64, typ: &str) {
-    *str += num.to_string().as_str();
-    *str += typ;
+fn push_comp(str: &mut String, num: i64, typ: char) {
+    str.push_str(num.to_string().as_str());
+    str.push(typ);
 }
 
-//TODO switch to split_inclusive
-fn parse_duration(chars: &mut Chars<'_>) -> anyhow::Result<TimeDelta> {
-    let mut comps = [0; 5];
-    let mut num_buffer = String::new();
-    for char in chars {
-        match char {
-            'T' => continue,
-            '0'..='9' => num_buffer.push(char),
-            'W' => comps[0] = num_buffer.parse()?,
-            'D' => comps[1] = num_buffer.parse()?,
-            'H' => comps[2] = num_buffer.parse()?,
-            'M' => comps[3] = num_buffer.parse()?,
-            'S' => comps[4] = num_buffer.parse()?,
-            _ => return Err(anyhow!("Unexpected character {} in duration string", char)),
-        }
-        if !char.is_numeric() {
-            num_buffer.clear();
-        }
+fn parse_duration(v: &str) -> anyhow::Result<TimeDelta> {
+    let mut parts = v.split_inclusive(char::is_uppercase);
+    let first_part = parts.next().ok_or(anyhow!("Duration is empty"))?;
+    if first_part != "P" {
+        return Err(anyhow!("Duration string missing P start char"))
     }
+    let comps = parts.into_iter()
+        .filter(|&p| p != "T")
+        .try_fold([0; 5], |mut acc, part| -> anyhow::Result<[i64; 5]> {
+            let (num, label) = part.split_at(part.len() - 1);
+            let idx = "WDHMS".find(label)
+                .ok_or(anyhow!("Unexpected label {} in duration string", label))?;
+            acc[idx] = num.parse()?;
+            Ok(acc)
+        })?;
     Ok(TimeDelta::weeks(comps[0]) + TimeDelta::days(comps[1]) +
        TimeDelta::hours(comps[2]) + TimeDelta::minutes(comps[3]) +
        TimeDelta::seconds(comps[4]))
 }
 
-fn find_sign(chars: &mut Chars<'_>) -> anyhow::Result<bool> {
-    let sign = match chars.next() {
-        Some('-') => true,
-        Some('+') => false,
-        Some('P') => return Ok(false),
-        Some(c) => return Err(anyhow!("Duration string should start with P but found {}", c)),
-        None => return Err(anyhow!("Empty duration String")),
-    };
-    match chars.next() {
-        Some('P') => Ok(sign),
-        _ => Err(anyhow!("Duration string too short")),
+fn pop_sign(s: &str) -> (bool, &str) {
+    if let Some(rest) = s.strip_prefix('-') {
+        return (true, rest)
     }
+    else if let Some(rest) = s.strip_prefix('+') {
+        return (false, rest)
+    }
+    (false, s)
 }
 
 #[cfg(test)]
@@ -136,7 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_duration() {
+    fn test_duration_negative() {
         assert_duration("-P1D", 0, -1, 0, 0, 0);
     }
 
