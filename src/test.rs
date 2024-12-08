@@ -1,6 +1,15 @@
 #[cfg(test)]
 mod tests {
-    use crate::{parser, serializer};
+    use crate::{constructors::todo, parser, serializer};
+
+    #[test]
+    fn test_builder() {
+        let vcal = todo::make()
+            .uid("128397129837129837".into())
+            .dtstamp(10.into())
+            .call();
+        println!("{}", serializer::to_ics(vcal));
+    }
 
     #[test]
     fn test_full() {
@@ -18,24 +27,28 @@ STATUS:COMPLETED
 DESCRIPTION:example description
 SUMMARY:Example
 UID:F87D9736-8ADE-47E4-AC46-638B5C86E7D0
+ORGANIZER;DIR="ldap://example.com:6666/o=ABC%20Industries,c=US???(cn=Jim%20
+ Dolittle)":mailto:jimdo@example.com
 X-TEST-PROP;VALUE=INTEGER:10
 X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#.replace("\n", "\r\n");
 
         let vcal = parser::from_ics(&in_ics).unwrap();
-        let out_ics = serializer::to_ics(vcal);
+        // println!("{}", vcal);
 
+        let out_ics = serializer::to_ics(vcal);
+        // println!("\nIN: {}", in_ics);
+        // println!("\nOUT: {}", out_ics);
+
+        //compare ignoring line order
         let in_lines: Vec<&str> = in_ics.split("\r\n").collect();
         let out_lines: Vec<&str> = out_ics.split("\r\n").collect();
-
         let in_lines_len = in_lines.len();
         let out_lines_len = out_lines.len();
-
         if in_lines_len != out_lines_len {
             panic!("Lines lost! Expected {} got {}", in_lines_len, out_lines_len);
         }
-
         for in_line in in_lines {
             assert!(
                 out_lines.contains(&in_line),
@@ -45,7 +58,7 @@ END:VCALENDAR"#.replace("\n", "\r\n");
     }
 
     #[test]
-    fn test_failure() {
+    fn test_quoted_params() {
         let in_ics = r#"BeGiN:VcALEnDAR
 VERsION:2.0
 CALScALE:GREGORIAN
@@ -73,7 +86,7 @@ END:VCALENDAR"#.replace("\n", "\r\n");
 
         let vcal = parser::from_ics(&in_ics).unwrap();
         let vtodo = vcal.get_vtodo().unwrap();
-        let org = vtodo.properties.get("ORGANIZER").unwrap();
+        let org = vtodo.props.get("ORGANIZER").unwrap();
         assert_eq!(org.expect_text().unwrap(), "mailto:jimdo@example.com");
         assert_eq!(org.params.get("DIR").unwrap(), "ldap://example.com:6666/o=ABC%20Industries,c=US???(cn=Jim%20Dolittle)");
     }

@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use crate::{parser::ContentLine, values::{address::ICalAddress, binary::ICalBinary, boolean::ICalBoolean, date::ICalDate, datetime::ICalDateTime, duration::ICalDuration, float::ICalFloat, integer::ICalInteger, period::ICalPeriod, recur::ICalRecur, text::{ICalText, ICalTextList}, time::ICalTime}};
 
 #[derive(Clone)]
+
 pub struct ICalProperty {
     pub value: ICalPropertyValue,
     pub params: ICalParameterMap,
@@ -100,6 +101,33 @@ impl ICalProperty {
         match &self.value {
             ICalPropertyValue::Text(t) => Some(t),
             _ => None
+        }
+    }
+}
+
+impl From<i32> for ICalProperty {
+    fn from(value: i32) -> Self {
+        Self {
+            value: ICalPropertyValue::Integer(value),
+            params: HashMap::new()
+        }
+    }
+}
+
+impl From<String> for ICalProperty {
+    fn from(value: String) -> Self {
+        Self {
+            value: ICalPropertyValue::Text(value),
+            params: HashMap::new()
+        }
+    }
+}
+
+impl From<&str> for ICalProperty {
+    fn from(value: &str) -> Self {
+        Self {
+            value: ICalPropertyValue::Text(value.to_string()),
+            params: HashMap::new()
         }
     }
 }

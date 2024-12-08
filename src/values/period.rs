@@ -20,17 +20,14 @@ pub enum EndOrDuration {
 
 impl ICalPropertyValueTrait for ICalPeriod {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
-        let parts: Vec<&str> = value.splitn(2, '/').collect();
-        if parts.len() != 2 {
-            return Err(anyhow!("Period has extra part"))
-        }
-        let start = ICalDateTime::parse(parts[0], params)
+        let parts: (&str, &str) = value.split_once('/').ok_or(anyhow!("Period missing /"))?;
+        let start = ICalDateTime::parse(parts.0, params)
             .context("Parsing period start")?;
 
-        match ICalDateTime::parse(parts[1], params) {
+        match ICalDateTime::parse(parts.1, params) {
             Ok(end) => Ok(ICalPeriod::new(start, EndOrDuration::End(end))),
             Err(_) => {
-                let duration = ICalDuration::parse(parts[1], params)
+                let duration = ICalDuration::parse(parts.1, params)
                     .context("Period has invalid end and duration")?;
                 Ok(ICalPeriod::new(start, EndOrDuration::Duration(duration)))
             },

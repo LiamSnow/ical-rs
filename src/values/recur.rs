@@ -172,11 +172,7 @@ where
 
 
 fn parse_rule(rule: &str) -> anyhow::Result<(&str, &str)> {
-    let parts: Vec<&str> = rule.splitn(2, '=').collect();
-    if parts.len() != 2 {
-        return Err(anyhow!("Recur rule has multiple ="));
-    }
-    Ok((parts[0], parts[1]))
+    rule.split_once('=').ok_or(anyhow!("Recur rule missing ="))
 }
 
 impl FromStr for Frequency {

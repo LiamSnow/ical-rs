@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::Peekable, str::{Chars, Lines}};
+use std::{collections::HashMap, iter::Peekable, str::Lines};
 use anyhow::anyhow;
 
 use crate::{component::ICalComponent, property::ICalProperty};
@@ -41,7 +41,7 @@ impl ICalComponent {
         }
 
         Ok(ICalComponent {
-            properties, components
+            props: properties, comps: components
         })
     }
 }
@@ -73,75 +73,54 @@ pub struct ContentLine {
 impl ContentLine {
     ///RFC5545 3.1: "name *(";" param ) ":" value CRLF"
     pub fn parse(line: &str) -> anyhow::Result<Self> {
-        let mut chars = line.chars().peekable();
         let mut params: HashMap<String, String> = HashMap::new();
 
-        let (name, delim) = Self::read_until_delim(&mut chars, vec![';', ':'])?;
+        let (name, delim, rest) = Self::split_once_at_delim(line, vec![';', ':'])?;
 
-        if delim == ';' {
-            Self::parse_params(&mut chars, &mut params)?;
-        }
+        let value = if delim == ';' {
+            Self::parse_params(rest, &mut params)?
+        } else {
+            rest.to_string()
+        };
 
-        let mut value = String::new();
-        while let Some(c) = chars.next() {
-            value.push(c);
-        }
-
-        Ok(ContentLine { name, params, value })
+        Ok(ContentLine { name: name.to_uppercase(), params, value })
     }
 
     /// RFC 5545 3.2
     /// Recursively read paramters
     /// Example: DIR="text";
     /// Example: DIR=asdfasdf;
-    fn parse_params(chars: &mut Peekable<Chars>, params: &mut HashMap<String, String>) -> anyhow::Result<()> {
-        let (name, _) = Self::read_until_delim(chars, vec!['='])?;
+    fn parse_params(rest: &str, params: &mut HashMap<String, String>) -> anyhow::Result<String> {
+        let (name, mut rest) = rest.split_once('=')
+            .ok_or(anyhow!("ContentLine Parameter missing =!"))?;
 
-        let val_start = chars.peek().expect("ContentLine Parameter had unexpected end after =".into());
-
-        let value: String;
+        let value: &str;
         let delim: char;
-
-        if *val_start == '"' {
-            value = Self::read_string(chars)?;
-            delim = chars.next().expect("ContentLine Parameter had unexpected end after quoted value!");
+        if let Some(r) = rest.strip_prefix('"') {
+            let (v, _, r) = Self::split_once_at_delim(r, vec!['"'])?;
+            value = &v[0..v.len()];
+            rest = &r[1..];
+            delim = r.chars().next().unwrap();
         }
         else {
-            (value, delim) = Self::read_until_delim(chars, vec![';', ':'])?;
+            (value, delim, rest) = Self::split_once_at_delim(rest, vec![';', ':'])?;
         }
 
-        params.insert(name, value);
+        params.insert(name.to_string(), value.to_string());
 
         match delim {
-            ';' => Self::parse_params(chars, params),
-            ':' => Ok(()),
+            ';' => Self::parse_params(rest, params),
+            ':' => Ok(rest.to_string()),
             _ => Err(anyhow!("ContentLine Parameter had unexpected char after value"))
         }
     }
 
-    fn read_until_delim(chars: &mut Peekable<Chars>, delims: Vec<char>) -> anyhow::Result<(String, char)> {
-        let mut name = String::new();
-        while let Some(c) = chars.next() {
-            if delims.contains(&c) {
-                return Ok((name, c))
-            }
-            name.push(c.to_ascii_uppercase())
-        }
-        Err(anyhow!("ContentLine missing delimeter!"))
-    }
-
-    /// RFC: "Property parameter values MUST NOT contain the DQUOTE character."
-    /// Reads from the first quote to the next quote
-    fn read_string(chars: &mut Peekable<Chars>) -> anyhow::Result<String> {
-        let mut s = String::new();
-        chars.next().expect("ContentLine Parameter quote value is empty!");
-        while let Some(c) = chars.next() {
-            if c == '"' {
-                return Ok(s)
-            }
-            s.push(c)
-        }
-        Err(anyhow!("ContentLine Parameter quote value unexpectedly ended!"))
+    fn split_once_at_delim(line: &str, delims: Vec<char>) -> anyhow::Result<(&str, char, &str)> {
+        let delim_pos = line.find(|c| delims.contains(&c))
+            .ok_or(anyhow!("ContentLine missing delimiter!"))?;
+        let delim = line.chars().nth(delim_pos).unwrap();
+        let (left, right) = line.split_at(delim_pos);
+        Ok((left, delim, &right[1..]))
     }
 }
 

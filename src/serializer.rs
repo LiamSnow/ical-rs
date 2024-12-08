@@ -16,10 +16,10 @@ impl ICalComponent {
         }
         ics.push_str("BEGIN:");
         ics.push_str(comp_name);
-        for (prop_name, prop) in &self.properties {
+        for (prop_name, prop) in &self.props {
             prop.to_ics(ics, prop_name);
         }
-        for (comp_name, comp) in &self.components {
+        for (comp_name, comp) in &self.comps {
             comp.to_ics(ics, comp_name, false);
         }
         ics.push_str(CRLF);
@@ -71,8 +71,14 @@ impl ICalProperty {
             line.push(';');
             line.push_str(name);
             line.push('=');
-            //TODO quotes
-            line.push_str(value);
+            if value.contains(':') || value.contains(';') || value.contains(',') {
+                line.push('"');
+                line.push_str(value);
+                line.push('"');
+            }
+            else {
+                line.push_str(value);
+            }
         }
         line.push(':');
         line.push_str(&self.serialize_value());
