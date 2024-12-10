@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::property::*;
 use super::{datetime::ICalDateTime, duration::ICalDuration};
 use anyhow::{anyhow, Context};
@@ -41,6 +39,22 @@ impl ICalPropertyValueTrait for ICalPeriod {
             EndOrDuration::Duration(dur) => dur.serialize(),
         };
         format!("{part1}/{part2}")
+    }
+}
+
+//TODO test
+pub type ICalPeriodList = Vec<ICalPeriod>;
+
+impl ICalPropertyValueTrait for ICalPeriodList {
+    fn parse(values: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
+        values.split(',').try_fold(Vec::new(), |mut acc, value| {
+            acc.push(ICalPeriod::parse(value, params)?);
+            Ok(acc)
+        })
+    }
+
+    fn serialize(&self) -> String {
+        self.iter().map(|d| d.serialize()).collect::<Vec<String>>().join(",")
     }
 }
 
@@ -100,15 +114,5 @@ mod tests {
         assert_eq!(per.end, end);
         let s = ICalPropertyValueTrait::serialize(&per);
         assert_eq!(s, value);
-    }
-}
-
-impl Display for ICalPeriod {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let t = match self.end_or_duration {
-            EndOrDuration::End(_) => "end",
-            EndOrDuration::Duration(_) => "duration",
-        };
-        write!(f, "(start:{},end:{},type:{})(Period)", self.start, self.end, t)
     }
 }

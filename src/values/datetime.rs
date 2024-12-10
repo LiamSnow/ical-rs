@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::str::FromStr;
 use anyhow::anyhow;
 
 use chrono::{DateTime, NaiveDateTime, TimeZone};
@@ -47,6 +47,22 @@ impl ICalPropertyValueTrait for ICalDateTime {
                 dt.format(FORMAT).to_string() + suffix
             },
         }
+    }
+}
+
+//TODO test
+pub type ICalDateTimeList = Vec<ICalDateTime>;
+
+impl ICalPropertyValueTrait for ICalDateTimeList {
+    fn parse(values: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
+        values.split(',').try_fold(Vec::new(), |mut acc, value| {
+            acc.push(ICalDateTime::parse(value, params)?);
+            Ok(acc)
+        })
+    }
+
+    fn serialize(&self) -> String {
+        self.iter().map(|d| d.serialize()).collect::<Vec<String>>().join(",")
     }
 }
 
@@ -121,14 +137,5 @@ mod tests {
         assert_eq!(result, expected);
         let s = ICalPropertyValueTrait::serialize(&result);
         assert_eq!(s, value);
-    }
-}
-
-impl Display for ICalDateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ICalDateTime::Local(dt) => write!(f, "{}(Local DateTime)", dt),
-            ICalDateTime::Zoned(dt) => write!(f, "{}(Zoned DateTime)", dt),
-        }
     }
 }

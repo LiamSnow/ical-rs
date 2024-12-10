@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::str::FromStr;
 
 use chrono::NaiveTime;
 use chrono_tz::Tz;
@@ -70,12 +70,5 @@ mod tests {
         assert_eq!(icaltime.timezone, expected_timezone);
         let s = ICalPropertyValueTrait::serialize(&icaltime);
         assert_eq!(s, value);
-    }
-}
-
-impl Display for ICalTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tzs = self.timezone.and_then(|t| Some(t.to_string())).unwrap_or("None".into());
-        write!(f, "time:{},zone:{}", self.time, tzs)
     }
 }

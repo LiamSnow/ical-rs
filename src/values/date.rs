@@ -17,6 +17,23 @@ impl ICalPropertyValueTrait for ICalDate {
     }
 }
 
+//TODO test
+pub type ICalDateList = Vec<ICalDate>;
+
+impl ICalPropertyValueTrait for ICalDateList {
+    fn parse(values: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
+        values.split(',').try_fold(Vec::new(), |mut acc, value| {
+            acc.push(ICalDate::parse(value, params)?);
+            Ok(acc)
+        })
+    }
+
+    fn serialize(&self) -> String {
+        self.iter().map(|d| d.serialize()).collect::<Vec<String>>().join(",")
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
