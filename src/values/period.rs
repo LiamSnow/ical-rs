@@ -1,4 +1,5 @@
-use crate::property::*;
+use crate::property::ICalParameterMap;
+use super::ICalValueTrait;
 use super::{datetime::ICalDateTime, duration::ICalDuration};
 use anyhow::{anyhow, Context};
 
@@ -16,7 +17,7 @@ pub enum EndOrDuration {
     Duration(ICalDuration)
 }
 
-impl ICalPropertyValueTrait for ICalPeriod {
+impl ICalValueTrait for ICalPeriod {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let parts: (&str, &str) = value.split_once('/').ok_or(anyhow!("Period missing /"))?;
         let start = ICalDateTime::parse(parts.0, params)
@@ -45,7 +46,7 @@ impl ICalPropertyValueTrait for ICalPeriod {
 //TODO test
 pub type ICalPeriodList = Vec<ICalPeriod>;
 
-impl ICalPropertyValueTrait for ICalPeriodList {
+impl ICalValueTrait for ICalPeriodList {
     fn parse(values: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         values.split(',').try_fold(Vec::new(), |mut acc, value| {
             acc.push(ICalPeriod::parse(value, params)?);
@@ -85,7 +86,6 @@ mod tests {
     use chrono::DateTime;
     use chrono_tz::Tz;
 
-    use crate::property::*;
     use crate::values::period::*;
 
     #[test]
@@ -112,7 +112,7 @@ mod tests {
         let per = ICalPeriod::parse(value, &HashMap::new()).expect("Failed to parse!");
         assert_eq!(per.start, start);
         assert_eq!(per.end, end);
-        let s = ICalPropertyValueTrait::serialize(&per);
+        let s = ICalValueTrait::serialize(&per);
         assert_eq!(s, value);
     }
 }

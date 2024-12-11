@@ -1,8 +1,9 @@
-use crate::property::*;
+use crate::property::{ICalParameterMap, ICalProperty};
+use super::{ICalPropertyValue, ICalValueTrait};
 
 pub type ICalText = String;
 
-impl ICalPropertyValueTrait for ICalText {
+impl ICalValueTrait for ICalText {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.to_string())
     }
@@ -14,7 +15,7 @@ impl ICalPropertyValueTrait for ICalText {
 
 pub type ICalTextList = Vec<String>;
 
-impl ICalPropertyValueTrait for ICalTextList {
+impl ICalValueTrait for ICalTextList {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.split(',').map(|s| s.to_owned()).collect())
     }

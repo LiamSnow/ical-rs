@@ -1,9 +1,27 @@
 #[cfg(test)]
 mod tests {
-    use chrono::TimeZone;
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
     use chrono_tz::Tz;
 
-    use crate::{component::ICalComponent, parser};
+    use crate::{component::ICalComponent, values::datetime::ICalDateTime};
+
+    #[test]
+    fn test_convert_x_prop() {
+        let in_ics = r#"BEGIN:VCALENDAR
+X-EXAMPLE:19921217T123456
+END:VCALENDAR"#;
+        let mut vcal = ICalComponent::from_ics(&in_ics).unwrap();
+
+        let x_example = vcal.get_prop("X-EXAMPLE").unwrap()
+            .convert_value::<ICalDateTime>().unwrap()
+            .get_as::<ICalDateTime>().unwrap();
+
+        let expected: ICalDateTime = NaiveDateTime::new(
+            NaiveDate::from_ymd_opt(1992, 12, 17).unwrap(),
+            NaiveTime::from_hms_opt(12, 34, 56).unwrap()
+        ).into();
+        assert_eq!(x_example, &expected);
+    }
 
     #[test]
     fn test_modify() {
@@ -13,7 +31,7 @@ SUMMARY:Old Summary
 END:VTODO
 END:VCALENDAR"#;
 
-        let mut vcal = parser::from_ics(&in_ics).unwrap();
+        let mut vcal = ICalComponent::from_ics(&in_ics).unwrap();
         let vtodo = vcal.expect_vtodo();
         vtodo.summary("New Summary".to_string());
         let out_ics = vcal.to_ics();
@@ -72,7 +90,7 @@ X-APPLE-SORT-ORDER:740793996
 END:VTODO
 END:VCALENDAR"#;
 
-        let vcal = parser::from_ics(&in_ics).unwrap();
+        let vcal = ICalComponent::from_ics(&in_ics).unwrap();
         assert_lines_match(&vcal.to_ics(), in_ics);
     }
 
@@ -102,7 +120,7 @@ ORGANIZER;DIR="ldap://example.com:6666/o=ABC%20Industries,
 END:VTODO
 END:VCALENDAR"#;
 
-        let mut vcal = parser::from_ics(&in_ics).unwrap();
+        let mut vcal = ICalComponent::from_ics(&in_ics).unwrap();
         let vtodo = vcal.expect_vtodo();
         assert_eq!(vtodo.get_organizer_value().unwrap(), "mailto:jimdo@example.com");
         assert_eq!(

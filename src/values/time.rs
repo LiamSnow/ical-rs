@@ -3,7 +3,9 @@ use std::str::FromStr;
 use chrono::NaiveTime;
 use chrono_tz::Tz;
 
-use crate::property::*;
+use crate::property::ICalParameterMap;
+
+use super::ICalValueTrait;
 
 /// RFC 5545 3.3.12
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -14,7 +16,7 @@ pub struct ICalTime {
 
 const FORMAT: &str = "%H%M%S";
 
-impl ICalPropertyValueTrait for ICalTime {
+impl ICalValueTrait for ICalTime {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let is_utc = value.ends_with('Z');
         let value = if is_utc { value.trim_end_matches('Z') } else { value };
@@ -38,7 +40,6 @@ mod tests {
     use chrono::NaiveTime;
     use std::collections::HashMap;
 
-    use crate::property::*;
     use crate::values::time::*;
 
     #[test]
@@ -68,7 +69,7 @@ mod tests {
         let icaltime = ICalTime::parse(value, &params).expect("Failed to parse!");
         assert_eq!(icaltime.time, expected_time);
         assert_eq!(icaltime.timezone, expected_timezone);
-        let s = ICalPropertyValueTrait::serialize(&icaltime);
+        let s = ICalValueTrait::serialize(&icaltime);
         assert_eq!(s, value);
     }
 }

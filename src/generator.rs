@@ -3,6 +3,7 @@ use either::Either;
 use crate::{
     component::ICalComponent,
     values::{
+        ICalPropertyValue,
         binary::*, date::*, datetime::*, duration::*, geo::*, integer::*, period::*, recur::*,
         text::*,
     },

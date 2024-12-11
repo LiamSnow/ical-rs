@@ -1,9 +1,10 @@
-use crate::property::*;
+use crate::property::ICalParameterMap;
+use super::ICalValueTrait;
 use anyhow::Context;
 
 pub type ICalFloat = f64;
 
-impl ICalPropertyValueTrait for ICalFloat {
+impl ICalValueTrait for ICalFloat {
     fn parse(value: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(value.parse().context("Parsing ICalFloat")?)
     }

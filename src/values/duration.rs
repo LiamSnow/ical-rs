@@ -2,7 +2,8 @@ use anyhow::anyhow;
 
 use chrono::TimeDelta;
 
-use crate::property::*;
+use crate::property::ICalParameterMap;
+use super::ICalValueTrait;
 
 /// RFC 5545 3.3.6 Duration
 /// Syntax: ["+" / "-"] "P" (date / time / week)
@@ -15,7 +16,7 @@ use crate::property::*;
 ///  "-P1D" = Negative 1 day
 pub type ICalDuration = TimeDelta;
 
-impl ICalPropertyValueTrait for ICalDuration {
+impl ICalValueTrait for ICalDuration {
     /// The RFC is strict on either being date (day + time), time, or week
     /// but this system is more relaxed
     /// This also does not require time to include a T
@@ -112,7 +113,6 @@ fn pop_sign(s: &str) -> (bool, &str) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::property::*;
     use crate::values::duration::*;
 
     #[test]
@@ -145,7 +145,7 @@ mod tests {
         assert_eq!(minutes, expected_minutes, "Minutes wrong");
         assert_eq!(seconds, expected_seconds, "Seconds wrong");
 
-        let s = ICalPropertyValueTrait::serialize(&dur);
+        let s = ICalValueTrait::serialize(&dur);
         assert_eq!(s, value, "Serialization wrong");
     }
 }

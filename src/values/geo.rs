@@ -1,9 +1,10 @@
-use crate::property::*;
+use crate::property::ICalParameterMap;
+use super::ICalValueTrait;
 use anyhow::{anyhow, Context};
 
 pub type ICalGeo = (f64, f64);
 
-impl ICalPropertyValueTrait for ICalGeo {
+impl ICalValueTrait for ICalGeo {
     fn parse(values: &str, _: &ICalParameterMap) -> anyhow::Result<Self> {
         let values: Vec<&str> = values.split(',').collect();
         if values.len() != 2 {

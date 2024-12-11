@@ -94,7 +94,7 @@ impl ICalProperty {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::property::{ICalProperty, ICalPropertyValue};
+    use crate::{property::ICalProperty, values::ICalPropertyValue};
 
     #[test]
     fn test_serialize_property_line_fold() {

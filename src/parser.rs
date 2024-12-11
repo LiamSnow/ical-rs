@@ -3,17 +3,19 @@ use anyhow::anyhow;
 
 use crate::{component::{ICalComponent, ICalComponentMap, ICalPropertyMap}, property::ICalProperty};
 
-pub fn from_ics(ics: &str) -> anyhow::Result<ICalComponent> {
-    let mut lines = ics.lines().peekable();
-    let begin_line = lines.next().ok_or(anyhow!("ICal string is empty!"))?.to_uppercase();
-    if begin_line != "BEGIN:VCALENDAR" {
-        return Err(anyhow!("ICal started with {begin_line} not BEGIN:VCALENDAR!").into());
-    }
-    Ok(ICalComponent::from_ics("VCALENDAR".into(), &mut lines)?)
-}
-
 impl ICalComponent {
-    fn from_ics(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
+    //Parse a VCalendar component from an ICalendar string
+    //NOTE: ICal string MUST begin and end with VCALENDAR
+    pub fn from_ics(ics: &str) -> anyhow::Result<Self> {
+        let mut lines = ics.lines().peekable();
+        let begin_line = lines.next().ok_or(anyhow!("ICal string is empty!"))?.to_uppercase();
+        if begin_line != "BEGIN:VCALENDAR" {
+            return Err(anyhow!("ICal started with {begin_line} not BEGIN:VCALENDAR!").into());
+        }
+        Ok(Self::_from_ics("VCALENDAR".into(), &mut lines)?)
+    }
+
+    fn _from_ics(component_name: &str, lines: &mut Peekable<Lines>) -> anyhow::Result<ICalComponent> {
         let mut props = ICalPropertyMap::new();
         let mut comps = ICalComponentMap::new();
 
@@ -24,7 +26,7 @@ impl ICalComponent {
 
             match name.as_str() {
                 "BEGIN" => {
-                    let comp = ICalComponent::from_ics(&cl.value, lines)?;
+                    let comp = Self::_from_ics(&cl.value, lines)?;
                     comps.insert(cl.value, comp);
                 },
                 "END" => {
@@ -40,7 +42,7 @@ impl ICalComponent {
             }
         }
 
-        Ok(ICalComponent {
+        Ok(Self {
             props, comps
         })
     }

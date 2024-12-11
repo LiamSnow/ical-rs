@@ -1,10 +1,11 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 use anyhow::anyhow;
 
 use chrono::{DateTime, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
 
-use crate::property::*;
+use crate::property::{ICalParameterMap, ICalProperty};
+use super::{ICalPropertyValue, ICalValueTrait};
 
 /// RFC 5545 3.3.5
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -17,7 +18,7 @@ pub enum ICalDateTime {
 
 const FORMAT: &str = "%Y%m%dT%H%M%S";
 
-impl ICalPropertyValueTrait for ICalDateTime {
+impl ICalValueTrait for ICalDateTime {
     fn parse(value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         let is_utc = value.ends_with('Z');
         let value = if is_utc { value.trim_end_matches('Z') } else { value };
@@ -53,7 +54,7 @@ impl ICalPropertyValueTrait for ICalDateTime {
 //TODO test
 pub type ICalDateTimeList = Vec<ICalDateTime>;
 
-impl ICalPropertyValueTrait for ICalDateTimeList {
+impl ICalValueTrait for ICalDateTimeList {
     fn parse(values: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         values.split(',').try_fold(Vec::new(), |mut acc, value| {
             acc.push(ICalDateTime::parse(value, params)?);
@@ -66,30 +67,6 @@ impl ICalPropertyValueTrait for ICalDateTimeList {
     }
 }
 
-impl From<NaiveDateTime> for ICalProperty {
-    fn from(value: NaiveDateTime) -> Self {
-        Self::from_value(ICalPropertyValue::DateTime(value.into()))
-    }
-}
-
-impl From<DateTime<Tz>> for ICalProperty {
-    fn from(value: DateTime<Tz>) -> Self {
-        Self::from_value(ICalPropertyValue::DateTime(value.into()))
-    }
-}
-
-impl From<NaiveDateTime> for ICalDateTime {
-    fn from(value: NaiveDateTime) -> Self {
-        Self::Local(value)
-    }
-}
-
-impl From<DateTime<Tz>> for ICalDateTime {
-    fn from(value: DateTime<Tz>) -> Self {
-        Self::Zoned(value)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -97,7 +74,6 @@ mod tests {
     use chrono::NaiveDate;
     use chrono::NaiveTime;
 
-    use crate::property::*;
     use crate::values::datetime::*;
 
     #[test]
@@ -129,7 +105,40 @@ mod tests {
     fn assert_datetime(value: &str, params: &HashMap<String, String>, expected: ICalDateTime) {
         let result = ICalDateTime::parse(value, &params).expect("Failed to parse!");
         assert_eq!(result, expected);
-        let s = ICalPropertyValueTrait::serialize(&result);
+        let s = ICalValueTrait::serialize(&result);
         assert_eq!(s, value);
+    }
+}
+
+impl From<NaiveDateTime> for ICalProperty {
+    fn from(value: NaiveDateTime) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+    }
+}
+
+impl From<DateTime<Tz>> for ICalProperty {
+    fn from(value: DateTime<Tz>) -> Self {
+        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+    }
+}
+
+impl From<NaiveDateTime> for ICalDateTime {
+    fn from(value: NaiveDateTime) -> Self {
+        Self::Local(value)
+    }
+}
+
+impl From<DateTime<Tz>> for ICalDateTime {
+    fn from(value: DateTime<Tz>) -> Self {
+        Self::Zoned(value)
+    }
+}
+
+impl Display for ICalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            ICalDateTime::Local(dt) => write!(f, "{}", dt),
+            ICalDateTime::Zoned(dt) => write!(f, "{}", dt),
+        }
     }
 }

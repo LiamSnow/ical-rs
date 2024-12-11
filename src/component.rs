@@ -1,7 +1,8 @@
 use std::mem;
 use multimap::MultiMap;
 
-use crate::property::{ICalProperty, ICalPropertyValue};
+use crate::property::ICalProperty;
+use crate::values::ICalPropertyValue;
 
 pub struct ICalComponent {
     pub props: ICalPropertyMap,
