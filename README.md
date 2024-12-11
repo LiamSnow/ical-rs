@@ -36,13 +36,20 @@ let ics_str = vcal.to_ics();
 ```
 
 ### X & IANA Properties
+
+Convert Value:
 ```rust
 let in_ics = r#"BEGIN:VCALENDAR
 X-EXAMPLE:19921217T123456
 END:VCALENDAR"#;
 let mut vcal = ICalComponent::from_ics(&in_ics)?;
 let x_example = vcal.get_prop("X-EXAMPLE")?
-    .convert_value::<ICalDateTime>()?
-    .get_as::<ICalDateTime>()?;
-println!("{}", x_example); // 1992-12-17 12:34:56
+    .convert_value::<ICalDateTime>()?;
+```
+
+Read Later:
+```rust
+let value = vcal.get_prop("X-EXAMPLE")?
+    .get_as::<ICalDateTime>()?);
+println!("{}", value); // 1992-12-17 12:34:56
 ```
