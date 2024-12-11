@@ -7,8 +7,6 @@ use anyhow::{anyhow, Context};
 pub struct ICalPeriod {
     pub start: ICalDateTime,
     pub end_or_duration: EndOrDuration,
-    ///calculated from start & end_or_duration, only here for reference/convinence
-    pub end: ICalDateTime,
 }
 
 #[derive(Clone)]
@@ -43,6 +41,27 @@ impl ICalValueTrait for ICalPeriod {
     }
 }
 
+impl ICalPeriod {
+    pub fn new(start: ICalDateTime, end_or_duration: EndOrDuration) -> Self {
+        Self {
+            start,
+            end_or_duration,
+        }
+    }
+
+    pub fn calc_end(&mut self) -> ICalDateTime {
+        match &self.end_or_duration {
+            EndOrDuration::End(dt) => dt.clone(),
+            EndOrDuration::Duration(dur) => {
+                match self.start {
+                    ICalDateTime::Local(dt) => ICalDateTime::Local(dt.clone() + dur.clone()),
+                    ICalDateTime::Zoned(dt) => ICalDateTime::Zoned(dt.clone() + dur.clone()),
+                }
+            },
+        }
+    }
+}
+
 //TODO test
 pub type ICalPeriodList = Vec<ICalPeriod>;
 
@@ -56,25 +75,6 @@ impl ICalValueTrait for ICalPeriodList {
 
     fn serialize(&self) -> String {
         self.iter().map(|d| d.serialize()).collect::<Vec<String>>().join(",")
-    }
-}
-
-impl ICalPeriod {
-    pub fn new(start: ICalDateTime, end_or_duration: EndOrDuration) -> Self {
-        let end = match &end_or_duration {
-            EndOrDuration::End(dt) => dt.clone(),
-            EndOrDuration::Duration(dur) => {
-                match start {
-                    ICalDateTime::Local(dt) => ICalDateTime::Local(dt.clone() + dur.clone()),
-                    ICalDateTime::Zoned(dt) => ICalDateTime::Zoned(dt.clone() + dur.clone()),
-                }
-            },
-        };
-        Self {
-            start,
-            end_or_duration,
-            end,
-        }
     }
 }
 
