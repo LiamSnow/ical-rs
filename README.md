@@ -22,16 +22,13 @@ let new_ics_str = vcal.to_ics();
 ### Make New
 ```rust
 let dtstamp = Tz::America__New_York.with_ymd_and_hms(1992, 12, 17, 12, 34, 56)?;
-let vcal = ICalComponent::vcalendar()
-    .vtodo(
-        ICalComponent::empty()
-            .uid_random()
-            .dtstamp(dtstamp.into())
-            .percent_complete(10)
-            .summary("Example Todo")
-            .build()
-    )
-    .build();
+let vcal = ICalComponent::vcalendar_with_vtodo(
+    ICalComponent::empty()
+        .uid_random()
+        .dtstamp(dtstamp.into())
+        .percent_complete(10)
+        .build()
+);
 let ics_str = vcal.to_ics();
 ```
 

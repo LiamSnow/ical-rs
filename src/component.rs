@@ -125,7 +125,19 @@ impl ICalComponent {
             .prodid("-//Liam Snow//ical-rs//EN".to_string());
         vcal
     }
+    pub fn vcalendar_with_vtodo(vtodo: Self) -> Self {
+        Self::vcalendar()
+            .vtodo(vtodo)
+            .build()
+    }
+    pub fn vcalendar_with_vevent(vtodo: Self) -> Self {
+        Self::vcalendar()
+            .vtodo(vtodo)
+            .build()
+    }
 
+
+    /// replaces the current VEVENT or creates a new one if none exists
     pub fn vevent(&mut self, vevent: Self) -> &mut Self {
         self.set_comp(VEVENT, vevent)
     }
@@ -137,6 +149,7 @@ impl ICalComponent {
     }
 
 
+    /// replaces the current VTODO or creates a new one if none exists
     pub fn vtodo(&mut self, vtodo: Self) -> &mut Self {
         self.set_comp(VTODO, vtodo)
     }
@@ -148,6 +161,7 @@ impl ICalComponent {
     }
 
 
+    /// inserts a given VALARM
     pub fn valarm(&mut self, valarm: Self) -> &mut Self {
         self.insert_comp(VALARM, valarm)
     }
@@ -159,6 +173,7 @@ impl ICalComponent {
     }
 
 
+    /// replaces the current VJOURNAL or creates a new one if none exists
     pub fn vjournal(&mut self, vjournal: Self) -> &mut Self {
         self.set_comp(VJOURNAL, vjournal)
     }
@@ -170,6 +185,7 @@ impl ICalComponent {
     }
 
 
+    /// replaces the current VFREEBUSY or creates a new one if none exists
     pub fn vfreebusy(&mut self, vfreebusy: Self) -> &mut Self {
         self.set_comp(VFREEBUSY, vfreebusy)
     }
@@ -181,6 +197,7 @@ impl ICalComponent {
     }
 
 
+    /// replaces the current VTIMEZONE or creates a new one if none exists
     pub fn vtimezone(&mut self, vtimezone: Self) -> &mut Self {
         self.set_comp(VTIMEZONE, vtimezone)
     }

@@ -43,15 +43,13 @@ END:VCALENDAR"#;
     fn test_builder() {
         let dtstamp = Tz::America__New_York.with_ymd_and_hms(1992, 12, 17, 12, 34, 56).unwrap();
 
-        let vcal = ICalComponent::vcalendar()
-            .vtodo(
-                ICalComponent::empty()
-                    .uid("128397129837129837".to_string())
-                    .dtstamp(dtstamp.into())
-                    .percent_complete(10)
-                    .build()
-            )
-            .build();
+        let vcal = ICalComponent::vcalendar_with_vtodo(
+            ICalComponent::empty()
+                .uid("128397129837129837".to_string())
+                .dtstamp(dtstamp.into())
+                .percent_complete(10)
+                .build()
+        );
 
         let expected_ics = r#"BEGIN:VCALENDAR
 VERSION:2.0
