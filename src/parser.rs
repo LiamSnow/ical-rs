@@ -1,5 +1,5 @@
 use std::{collections::HashMap, iter::Peekable, str::Lines};
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 
 use crate::{component::{ICalComponent, ICalComponentMap, ICalPropertyMap}, property::ICalProperty};
 
@@ -10,7 +10,7 @@ impl ICalComponent {
         let mut lines = ics.lines().peekable();
         let begin_line = lines.next().ok_or(anyhow!("ICal string is empty!"))?.to_uppercase();
         if begin_line != "BEGIN:VCALENDAR" {
-            return Err(anyhow!("ICal started with {begin_line} not BEGIN:VCALENDAR!").into());
+            bail!("ICal started with {begin_line} not BEGIN:VCALENDAR!")
         }
         Ok(Self::_from_ics("VCALENDAR".into(), &mut lines)?)
     }

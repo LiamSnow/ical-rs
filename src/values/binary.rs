@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use base64::Engine;
 
 use crate::property::ICalParameterMap;
@@ -17,7 +17,7 @@ impl ICalValueTrait for ICalBinary {
             .ok_or(anyhow!("Binary value must have ENCODING parameter"))?;
 
         if encoding != "BASE64" {
-            return Err(anyhow!("Binary value must have ENCODING=BASE64 parameter"));
+            bail!("Binary value must have ENCODING=BASE64 parameter");
         }
 
         Ok(base64::engine::general_purpose::STANDARD.decode(value)?)

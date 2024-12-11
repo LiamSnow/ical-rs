@@ -17,13 +17,15 @@ pub enum GetPropError {
 }
 
 gen_prop_methods!(
-    /// 3.7 Calendar Properties
+    // 3.7 Calendar Properties
+
     calscale One Text,
     method   One Text,
     prodid   One Text,
     version  One Text,
 
-    /// 3.8.1 Descriptive Component Properties
+    // 3.8.1 Descriptive Component Properties
+
     attach      Many Either Text Binary,
     categories  Many TextList,
     class       One  Text,
@@ -38,7 +40,8 @@ gen_prop_methods!(
     summary     One  Text,
 
 
-    /// 3.8.2 Date and Time Component Properties
+    // 3.8.2 Date and Time Component Properties
+
     completed One DateTime,
     dtend     One Either DateTime Date,
     due       One Either DateTime Date,
@@ -48,7 +51,8 @@ gen_prop_methods!(
     transp    One Text,
 
 
-    /// 3.8.3 Time Zone Component Properties
+    // 3.8.3 Time Zone Component Properties
+
     tzid         One Text,
     tzname       One Text,
     tzoffsetfrom One Text,
@@ -56,7 +60,8 @@ gen_prop_methods!(
     tzurl        One Text,
 
 
-    /// 3.8.4 Relationship Component Properties
+    // 3.8.4 Relationship Component Properties
+
     attendee      Many Text,
     contact       Many Text,
     organizer     One  Text,
@@ -65,23 +70,29 @@ gen_prop_methods!(
     url           One  Text,
     uid           One  Text,
 
-    /// 3.8.5 Recurrence Component Properties
+    // 3.8.5 Recurrence Component Properties
+
     exdate Many Either DateTimeList DateList,
     rrule  One  Recur,
 
-    /// 3.8.6 Alarm Component Properties
+    // 3.8.6 Alarm Component Properties
+
     action  One Text,
     repeat  One Integer,
     trigger One Either Duration DateTime,
 
-    /// 3.8.7 Change Management Component Properties
+    // 3.8.7 Change Management Component Properties
+
     created       One DateTime,
     dtstamp       One DateTime,
     last_modified One DateTime,
     sequence      One Integer,
 
-    /// 3.8.8 Miscellaneous Component Properties
+    // 3.8.8 Miscellaneous Component Properties
+
     request_status Many Text,
+
+    //NOTE: rdate is manually implemented further down
 );
 
 macro_rules! gen_prop_methods {

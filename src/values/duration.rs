@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 
 use chrono::TimeDelta;
 
@@ -83,7 +83,7 @@ fn parse_duration(v: &str) -> anyhow::Result<TimeDelta> {
     let mut parts = v.split_inclusive(char::is_uppercase);
     let first_part = parts.next().ok_or(anyhow!("Duration is empty"))?;
     if first_part != "P" {
-        return Err(anyhow!("Duration string missing P start char"))
+        bail!("Duration string missing P start char")
     }
     let comps = parts.into_iter()
         .filter(|&p| p != "T")

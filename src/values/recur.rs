@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::property::ICalParameterMap;
 use super::ICalValueTrait;
 use super::{date::ICalDate, datetime::ICalDateTime};
-use anyhow::{anyhow, Context};
+use anyhow::{anyhow, Context, bail};
 
 //TODO Helper functions to make and use Recur easily
 
@@ -79,7 +79,7 @@ impl ICalValueTrait for ICalRecur {
         //TODO FIXME FREQ may not be first rule, but it is required
         let (name, val) = parse_rule(rules.next().ok_or(anyhow!("Recur has no rules"))?)?;
         if name != "FREQ" {
-            return Err(anyhow!("First rule in RECUR must be FREQ"));
+            bail!("First rule in RECUR must be FREQ");
         }
         let freq = Frequency::from_str(val)?;
 
@@ -103,7 +103,7 @@ impl ICalValueTrait for ICalRecur {
                 "BYWEEKNO" => extend_parse_vec(&mut recur.byweekno, val)?,
                 "BYMONTH" => extend_parse_vec(&mut recur.bymonth, val)?,
                 "BYSETPOS" => extend_parse_vec(&mut recur.bysetpos, val)?,
-                _ => return Err(anyhow!("Unknown rule in RECUR"))
+                _ => bail!("Unknown rule in RECUR")
             }
         }
 
