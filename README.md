@@ -11,8 +11,7 @@ ICalendar (RFC 5545) serializer and parser.
 let ics_str = "BEGIN:VCALENDAR...";
 let mut vcal = parser::from_ics(ics_str).unwrap();
 let vtodo = vcal.expect_vtodo();
-let summary = vtodo.expect_prop("SUMMARY");
-*summary = "Example Two".into();
+vtodo.summary("New Summary")
 let new_ics_str = vcal.to_ics();
 ```
 

@@ -13,9 +13,3 @@ impl ICalPropertyValueTrait for ICalInteger {
     }
 }
 
-impl From<ICalInteger> for ICalProperty {
-    fn from(value: ICalInteger) -> Self {
-        Self::from_value(ICalPropertyValue::Integer(value))
-    }
-}
-

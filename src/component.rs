@@ -1,7 +1,7 @@
 use std::mem;
 use multimap::MultiMap;
 
-use crate::property::ICalProperty;
+use crate::property::{ICalProperty, ICalPropertyValue};
 
 pub struct ICalComponent {
     pub props: ICalPropertyMap,
@@ -47,16 +47,6 @@ impl ICalComponent {
         self.comps.get_vec_mut(name)
     }
 
-    /// force gets the first property under given name
-    pub fn expect_prop(&mut self, name: &str) -> &mut ICalProperty {
-        self.get_prop(name).unwrap()
-    }
-
-    /// force gets the first component under given name
-    pub fn expect_comp(&mut self, name: &str) -> &mut ICalComponent {
-        self.get_comp(name).unwrap()
-    }
-
     /// adds another value under the given name
     pub fn insert_prop(&mut self, name: &str, value: ICalProperty) -> &mut Self {
         self.props.insert(name.to_string(), value);
@@ -69,13 +59,13 @@ impl ICalComponent {
         self
     }
 
-    /// replaces the value at the first property under the given name
-    pub fn set_prop(&mut self, name: &str, new_value: ICalProperty) -> &mut Self {
-        if let Some(prop_value) = self.get_prop(name) {
-            *prop_value = new_value;
+    /// replaces or creates the property under the given name
+    pub fn set_prop(&mut self, name: &str, new_prop: ICalProperty) -> &mut Self {
+        if let Some(prop) = self.get_prop(name) {
+            *prop = new_prop;
         }
         else {
-            self.insert_prop(name, new_value);
+            self.insert_prop(name, new_prop);
         }
         self
     }
@@ -90,6 +80,32 @@ impl ICalComponent {
         }
         self
     }
+
+    /// sets the value of the property if it exists
+    /// or creates a new property with value & no parameters
+    pub fn set_prop_value(&mut self, name: &str, new_value: ICalPropertyValue) -> &mut Self {
+        if let Some(prop) = self.get_prop(name) {
+            prop.value = new_value;
+        }
+        else {
+            self.insert_prop(name, ICalProperty::from_value(new_value));
+        }
+        self
+    }
+
+    /// sets the value of property's parameter
+    /// fails if property does not exist
+    pub fn set_prop_param(&mut self, prop_name: &str, param_name: &str, new_value: String) -> &mut Self {
+        if let Some(prop_ref) = self.get_prop(prop_name) {
+            prop_ref.params.insert(param_name.to_string(), new_value);
+        }
+        self
+    }
+
+    /// returns the value prop's param if it exists
+    pub fn get_prop_param(&self, prop_name: &str, param_name: &str) -> Option<&String> {
+        self.props.get(prop_name)?.params.get(param_name)
+    }
 }
 
 pub const VEVENT: &str = "VEVENT";
@@ -103,9 +119,9 @@ impl ICalComponent {
     /// creates a default VCALENDAR
     pub fn vcalendar() -> Self {
         let mut vcal = Self::empty();
-        vcal.set_prop("VERSION", "2.0".into());
-        vcal.set_prop("CALSCALE", "GREGORIAN".into());
-        vcal.set_prop("PRODID", "-//Liam Snow//ical-rs//EN".into());
+        vcal.version("2.0".to_string())
+            .calscale("GREGORIAN".to_string())
+            .prodid("-//Liam Snow//ical-rs//EN".to_string());
         vcal
     }
 

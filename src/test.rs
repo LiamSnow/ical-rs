@@ -15,8 +15,7 @@ END:VCALENDAR"#;
 
         let mut vcal = parser::from_ics(&in_ics).unwrap();
         let vtodo = vcal.expect_vtodo();
-        let summary = vtodo.expect_prop("SUMMARY");
-        *summary = "New Summary".into();
+        vtodo.summary("New Summary".to_string());
         let out_ics = vcal.to_ics();
         let out_lines: Vec<&str> = out_ics.lines().collect();
         assert!(out_lines.contains(&"SUMMARY:New Summary"));
@@ -29,8 +28,9 @@ END:VCALENDAR"#;
         let vcal = ICalComponent::vcalendar()
             .vtodo(
                 ICalComponent::empty()
-                    .uid("128397129837129837")
-                    .dtstamp_zoned(dtstamp)
+                    .uid("128397129837129837".to_string())
+                    .dtstamp(dtstamp.into())
+                    .percent_complete(10)
                     .build()
             )
             .build();
@@ -42,6 +42,7 @@ PRODID:-//Liam Snow//ical-rs//EN
 BEGIN:VTODO
 UID:128397129837129837
 DTSTAMP:19921217T123456
+PERCENT-COMPLETE:10
 END:VTODO
 END:VCALENDAR"#;
 
@@ -103,9 +104,10 @@ END:VCALENDAR"#;
 
         let mut vcal = parser::from_ics(&in_ics).unwrap();
         let vtodo = vcal.expect_vtodo();
-        let org = vtodo.expect_prop("ORGANIZER");
-
-        assert_eq!(org.expect_text(), "mailto:jimdo@example.com");
-        assert_eq!(org.params.get("DIR").unwrap(), "ldap://example.com:6666/o=ABC%20Industries,c=US???(cn=Jim%20Dolittle)");
+        assert_eq!(vtodo.get_organizer_value().unwrap(), "mailto:jimdo@example.com");
+        assert_eq!(
+            vtodo.get_organizer_prop().unwrap().get_param("DIR").unwrap(),
+            "ldap://example.com:6666/o=ABC%20Industries,c=US???(cn=Jim%20Dolittle)"
+        );
     }
 }
