@@ -272,6 +272,14 @@ macro_rules! gen_prop_methods {
 
 pub(crate) use gen_prop_methods;
 
+impl ICalComponent {
+    pub fn uid_random(&mut self) -> &mut Self {
+        let uuid = uuid7::uuid7();
+        self.uid(uuid.to_string())
+    }
+}
+
+// -- RDate --
 pub enum RDateValue<'a> {
     DateTimeList(&'a ICalDateTimeList),
     DateList(&'a ICalDateList),
