@@ -2,7 +2,7 @@ use std::mem;
 use multimap::MultiMap;
 
 use crate::property::ICalProperty;
-use crate::values::ICalPropertyValue;
+use crate::values::ICalValue;
 
 pub struct ICalComponent {
     pub props: ICalPropertyMap,
@@ -84,7 +84,7 @@ impl ICalComponent {
 
     /// sets the value of the property if it exists
     /// or creates a new property with value & no parameters
-    pub fn set_prop_value(&mut self, name: &str, new_value: ICalPropertyValue) -> &mut Self {
+    pub fn set_prop_value(&mut self, name: &str, new_value: ICalValue) -> &mut Self {
         if let Some(prop) = self.get_prop(name) {
             prop.value = new_value;
         }

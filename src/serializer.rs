@@ -94,14 +94,14 @@ impl ICalProperty {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{property::ICalProperty, values::ICalPropertyValue};
+    use crate::{property::ICalProperty, values::ICalValue};
 
     #[test]
     fn test_serialize_property_line_fold() {
         let name = "EXAMPLE";
         let str = "This is a really long line. ".repeat(20);
         let prop = ICalProperty {
-            value: ICalPropertyValue::Text(str),
+            value: ICalValue::Text(str),
             params: HashMap::new(),
         };
         let mut ics = String::new();

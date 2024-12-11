@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use anyhow::anyhow;
 
-use crate::{parser::ContentLine, values::{text::ICalText, GetEitherFromICalValue, GetFromICalValue, ICalPropertyValue, ICalValueTrait}};
+use crate::{parser::ContentLine, values::{text::ICalText, GetEitherFromICalValue, GetFromICalValue, ICalValue, ICalValueTrait}};
 
 #[derive(Clone)]
 
 pub struct ICalProperty {
-    pub value: ICalPropertyValue,
+    pub value: ICalValue,
     pub params: ICalParameterMap,
 }
 
@@ -14,12 +14,12 @@ pub type ICalParameterMap = HashMap<String, String>;
 
 
 impl ICalProperty {
-    pub fn new(value: ICalPropertyValue, params: ICalParameterMap) -> Self {
+    pub fn new(value: ICalValue, params: ICalParameterMap) -> Self {
         ICalProperty { value, params }
     }
 
     /// creates a property with value and no parameters
-    pub fn from_value(value: ICalPropertyValue) -> Self {
+    pub fn from_value(value: ICalValue) -> Self {
         Self::new(value, HashMap::new())
     }
 
@@ -34,8 +34,8 @@ impl ICalProperty {
 
     pub(crate) fn from_content_line(cl: ContentLine) -> anyhow::Result<Self> {
         let value = match cl.params.get("VALUE") {
-            Some(v) => ICalPropertyValue::from_value_param(v, &cl.value, &cl.params)?,
-            None => ICalPropertyValue::from_default(&cl.name, &cl.value, &cl.params)?,
+            Some(v) => ICalValue::from_value_param(v, &cl.value, &cl.params)?,
+            None => ICalValue::from_default(&cl.name, &cl.value, &cl.params)?,
         };
         Ok(Self::new(value, cl.params))
     }
@@ -46,7 +46,7 @@ impl ICalProperty {
     pub fn convert_value<T>(&mut self) -> anyhow::Result<&mut Self>
     where
         T: ICalValueTrait,
-        ICalPropertyValue: From<T>,
+        ICalValue: From<T>,
     {
         let value: &ICalText = self.get_as().ok_or(anyhow!("Value must be ICalText to convert!"))?;
         let new_value = T::parse(value, &self.params)?;

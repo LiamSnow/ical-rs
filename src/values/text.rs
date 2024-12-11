@@ -1,5 +1,5 @@
 use crate::property::{ICalParameterMap, ICalProperty};
-use super::{ICalPropertyValue, ICalValueTrait};
+use super::{ICalValue, ICalValueTrait};
 
 pub type ICalText = String;
 
@@ -27,6 +27,6 @@ impl ICalValueTrait for ICalTextList {
 
 impl From<&str> for ICalProperty {
     fn from(value: &str) -> Self {
-        Self::from_value(ICalPropertyValue::Text(value.to_string()))
+        Self::from_value(ICalValue::Text(value.to_string()))
     }
 }

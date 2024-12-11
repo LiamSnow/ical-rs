@@ -40,7 +40,7 @@ pub trait ICalValueTrait: Sized {
     fn serialize(&self) -> String;
 }
 
-impl ICalPropertyValue {
+impl ICalValue {
     //TODO move to generator
     pub(crate) fn from_default(name: &str, value: &str, params: &ICalParameterMap) -> anyhow::Result<Self> {
         Ok(match name {
@@ -111,11 +111,11 @@ impl ICalPropertyValue {
 }
 
 pub trait GetFromICalValue {
-    fn from_value(value: &ICalPropertyValue) -> Option<&Self>;
+    fn from_value(value: &ICalValue) -> Option<&Self>;
 }
 
 pub trait GetEitherFromICalValue<'a>: Sized {
-    fn from_value(value: &'a ICalPropertyValue) -> Option<Self>;
+    fn from_value(value: &'a ICalValue) -> Option<Self>;
 }
 
 gen_get_either_from_ical_prop_value!(
@@ -133,13 +133,13 @@ macro_rules! gen_prop_value_enum {
         paste::paste! {
             $(#[$enum_meta])*
             #[derive(Clone)]
-            pub enum ICalPropertyValue {
+            pub enum ICalValue {
                 $(
                     $typ([<ICal $typ>]),
                 )+
             }
 
-            impl ICalPropertyValue {
+            impl ICalValue {
                 pub fn serialize(&self) -> String {
                     match self {
                         $(
@@ -151,17 +151,17 @@ macro_rules! gen_prop_value_enum {
 
             $(
                 impl GetFromICalValue for [<ICal $typ>] {
-                    fn from_value(value: &ICalPropertyValue) -> Option<&Self> {
+                    fn from_value(value: &ICalValue) -> Option<&Self> {
                         match value {
-                            ICalPropertyValue::$typ(v) => Some(v),
+                            ICalValue::$typ(v) => Some(v),
                             _ => None,
                         }
                     }
                 }
 
-                impl From<[<ICal $typ>]> for ICalPropertyValue {
+                impl From<[<ICal $typ>]> for ICalValue {
                     fn from(value: [<ICal $typ>]) -> Self {
-                        ICalPropertyValue::$typ(value.into())
+                        ICalValue::$typ(value.into())
                     }
                 }
             )+
@@ -176,10 +176,10 @@ macro_rules! gen_get_either_from_ical_prop_value {
         paste::paste! {
             $(
                 impl<'a> GetEitherFromICalValue<'a> for Either<&'a [<ICal $type1>], &'a [<ICal $type2>]> {
-                    fn from_value(value: &'a ICalPropertyValue) -> Option<Self> {
+                    fn from_value(value: &'a ICalValue) -> Option<Self> {
                         match value {
-                            ICalPropertyValue::$type1(t) => Some(Either::Left(t)),
-                            ICalPropertyValue::$type2(b) => Some(Either::Right(b)),
+                            ICalValue::$type1(t) => Some(Either::Left(t)),
+                            ICalValue::$type2(b) => Some(Either::Right(b)),
                             _ => None
                         }
                     }

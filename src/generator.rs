@@ -3,7 +3,7 @@ use either::Either;
 use crate::{
     component::ICalComponent,
     values::{
-        ICalPropertyValue,
+        ICalValue,
         binary::*, date::*, datetime::*, duration::*, geo::*, integer::*, period::*, recur::*,
         text::*,
     },
@@ -207,7 +207,7 @@ macro_rules! gen_prop_methods {
             //also adds VALUE=XXX parameter because this type is non default
             $(#[$field_meta])*
             pub fn [<$prop _ $typ2:lower>](&mut self, value: [<ICal $typ2>]) -> &mut Self {
-                let prop_value: ICalPropertyValue = value.into();
+                let prop_value: ICalValue = value.into();
                 let prop_name = gen_prop_methods!(@prop_name $prop);
                 let value_param = prop_value.to_value_param().to_string();
                 self.set_prop_value(prop_name, prop_value);
@@ -293,7 +293,7 @@ impl ICalComponent {
         self.set_prop_value("RDATE", value.into())
     }
 
-    fn rdate_non_default(&mut self, value: ICalPropertyValue) -> &mut Self {
+    fn rdate_non_default(&mut self, value: ICalValue) -> &mut Self {
         let value_param = value.to_value_param().to_string();
         self.set_prop_value("RDATE", value);
         self.set_prop_param("RDATE", "VALUE", value_param);
@@ -316,9 +316,9 @@ impl ICalComponent {
     pub fn get_rdate(&self) -> Result<RDateValue, GetPropError> {
         let prop = self.props.get("RDATE").ok_or(GetPropError::PropertyMissing)?;
         Ok(match &prop.value {
-            ICalPropertyValue::DateList(v) => RDateValue::DateList(&v),
-            ICalPropertyValue::DateTimeList(v) => RDateValue::DateTimeList(&v),
-            ICalPropertyValue::PeriodList(v) => RDateValue::PeriodList(&v),
+            ICalValue::DateList(v) => RDateValue::DateList(&v),
+            ICalValue::DateTimeList(v) => RDateValue::DateTimeList(&v),
+            ICalValue::PeriodList(v) => RDateValue::PeriodList(&v),
             _ => return Err(GetPropError::WrongValueType)
         })
     }

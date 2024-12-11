@@ -5,7 +5,7 @@ use chrono::{DateTime, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
 
 use crate::property::{ICalParameterMap, ICalProperty};
-use super::{ICalPropertyValue, ICalValueTrait};
+use super::{ICalValue, ICalValueTrait};
 
 /// RFC 5545 3.3.5
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -112,13 +112,13 @@ mod tests {
 
 impl From<NaiveDateTime> for ICalProperty {
     fn from(value: NaiveDateTime) -> Self {
-        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+        Self::from_value(ICalValue::DateTime(value.into()))
     }
 }
 
 impl From<DateTime<Tz>> for ICalProperty {
     fn from(value: DateTime<Tz>) -> Self {
-        Self::from_value(ICalPropertyValue::DateTime(value.into()))
+        Self::from_value(ICalValue::DateTime(value.into()))
     }
 }
 
